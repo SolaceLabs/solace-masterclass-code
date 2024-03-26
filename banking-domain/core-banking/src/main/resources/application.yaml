@@ -1,0 +1,10 @@
+spring:
+  main:
+    web-application-type: none
+
+solace:
+  reconnectionAttempts: "5"
+  connectionRetriesPerHost: "5"
+  transactionEventTopicString: "acmebank/solace/core/{transactionType}/v1/{currency}/{amount}/{transactionID}"
+  accountsOpenedQueueName: "accounts-opened"
+  accountsSuspendedQueueName: "accounts-suspended"

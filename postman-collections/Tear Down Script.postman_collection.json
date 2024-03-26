@@ -1,0 +1,3636 @@
+{
+	"info": {
+		"_postman_id": "73fd7b2c-987f-4795-8417-9b26c7c5abe5",
+		"name": "Tear Down Script - THIS WILL REMOVE ALL ENVIRONMENTS, MEM, DOMAINS, APP in account",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "26039126",
+		"_collection_link": "https://solacecloud.postman.co/workspace/Populate-Event-Portal-with-Samp~c201b69e-8fa5-44f3-9152-218caaef5e5a/collection/24825170-73fd7b2c-987f-4795-8417-9b26c7c5abe5?action=share&source=collection_link&creator=26039126"
+	},
+	"item": [
+		{
+			"name": "Get all users",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"   var jsonData = pm.response.json();\r",
+							"\r",
+							"var currentRole = \"\";\r",
+							"var epAdminUser = false;\r",
+							"var epNonAdminUserIds = [];\r",
+							"\r",
+							"\r",
+							"for(i in jsonData.data){\r",
+							"    epAdminUser = false;\r",
+							"    \r",
+							"    for(j in jsonData.data[i].roles){\r",
+							"        currentRole = jsonData.data[i].roles[j];\r",
+							"        console.log(jsonData.data[i].roles[j]);   \r",
+							"        if(currentRole == \"administrator\"){\r",
+							"               epAdminUser = true; \r",
+							"        }\r",
+							"    }\r",
+							"        if(!epAdminUser){\r",
+							"        epNonAdminUserIds.push(jsonData.data[i].userId);\r",
+							"        }\r",
+							"\r",
+							"}\r",
+							"console.log(epNonAdminUserIds);\r",
+							"pm.variables.set(\"epNonAdminUserIds\", epNonAdminUserIds);\r",
+							"pm.variables.set(\"epNonAdminUserIdsCount\", 0);\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{solaceCloudBaseUrl}}/users",
+					"host": [
+						"{{solaceCloudBaseUrl}}"
+					],
+					"path": [
+						"users"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Delete user",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"if(pm.variables.has(\"epNonAdminUserIds\")){\r",
+							"    var epNonAdminUserIds = pm.variables.get(\"epNonAdminUserIds\");\r",
+							"    var epNonAdminUserIdsCount = pm.variables.get(\"epNonAdminUserIdsCount\");\r",
+							"\r",
+							"    console.log(\"epNonAdminUserIds\",epNonAdminUserIds );\r",
+							"    console.log(\"epNonAdminUserIdsCount\",epNonAdminUserIdsCount );\r",
+							"    console.log(\"current environment id\", epNonAdminUserIds[epNonAdminUserIdsCount] );\r",
+							"    pm.collectionVariables.set(\"epStudentId\", epNonAdminUserIds[epNonAdminUserIdsCount]);\r",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"//figure out whether to loop again\r",
+							"if(pm.variables.has(\"epNonAdminUserIds\")){\r",
+							"    epNonAdminUserIds = pm.variables.get(\"epNonAdminUserIds\");\r",
+							"    epNonAdminUserIdsCount = pm.variables.get(\"epNonAdminUserIdsCount\");\r",
+							"    epNonAdminUserIdsCount++;\r",
+							"    if(epNonAdminUserIdsCount < epNonAdminUserIds.length){\r",
+							"        console.log(\"count\", epNonAdminUserIdsCount, epNonAdminUserIds.length);\r",
+							"        pm.variables.set(\"epNonAdminUserIdsCount\", epNonAdminUserIdsCount);\r",
+							"        postman.setNextRequest(\"Delete user\");\r",
+							"    }\r",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{solaceCloudBaseUrl}}/users/:userId",
+					"host": [
+						"{{solaceCloudBaseUrl}}"
+					],
+					"path": [
+						"users",
+						":userId"
+					],
+					"variable": [
+						{
+							"key": "userId",
+							"value": "{{epStudentId}}"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get the environment objects",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var response = JSON.parse(responseBody);\r",
+							"var epEnvironmentIds = [];\r",
+							"var epEnvironmentNames = [];\r",
+							"\r",
+							"for(var i=0; i < response.data.length; i++){\r",
+							"    if(response.data[i].name != \"Default\"){\r",
+							"        epEnvironmentIds.push(response.data[i].id);\r",
+							"        epEnvironmentNames.push(response.data[i].name);\r",
+							"    }\r",
+							"}\r",
+							"\r",
+							"pm.variables.set(\"epEnvironmentIds\", epEnvironmentIds);\r",
+							"pm.variables.set(\"epEnvironmentNames\", epEnvironmentNames);\r",
+							"pm.variables.set(\"epEnvironmentIdsCount\", 0);\r",
+							"console.log(\"epEnvironmentIds\", epEnvironmentIds);\r",
+							"console.log(\"epEnvironmentNames\", epEnvironmentNames);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json;charset=UTF-8"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/v2/architecture/environments",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"v2",
+						"architecture",
+						"environments"
+					],
+					"query": [
+						{
+							"key": "pageSize",
+							"value": "20",
+							"description": "The number of events to get per page.",
+							"disabled": true
+						},
+						{
+							"key": "pageNumber",
+							"value": "1",
+							"description": "The page number to get.",
+							"disabled": true
+						},
+						{
+							"key": "sort",
+							"value": "reprehenderit aliquip exercitation",
+							"disabled": true
+						},
+						{
+							"key": "like",
+							"value": "reprehenderit aliquip exercitation",
+							"disabled": true
+						}
+					]
+				},
+				"description": "Use this API to list all environments."
+			},
+			"response": [
+				{
+					"name": "Retrieve a list of environments and the accompanying metadata.",
+					"originalRequest": {
+						"method": "GET",
+						"header": [
+							{
+								"description": "Added as a part of security scheme: bearer",
+								"key": "Authorization",
+								"value": "Bearer <token>"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v2/architecture/environments?pageSize=20&pageNumber=1&sort=reprehenderit aliquip exercitation&like=reprehenderit aliquip exercitation",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v2",
+								"architecture",
+								"environments"
+							],
+							"query": [
+								{
+									"key": "pageSize",
+									"value": "20"
+								},
+								{
+									"key": "pageNumber",
+									"value": "1"
+								},
+								{
+									"key": "sort",
+									"value": "reprehenderit aliquip exercitation"
+								},
+								{
+									"key": "like",
+									"value": "reprehenderit aliquip exercitation"
+								}
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json;charset=UTF-8"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"data\": [\n    {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    },\n    {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  ],\n  \"meta\": {\n    \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n  }\n}"
+				},
+				{
+					"name": "Bad Request.",
+					"originalRequest": {
+						"method": "GET",
+						"header": [
+							{
+								"description": "Added as a part of security scheme: bearer",
+								"key": "Authorization",
+								"value": "Bearer <token>"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v2/architecture/environments?pageSize=20&pageNumber=1&sort=reprehenderit aliquip exercitation&like=reprehenderit aliquip exercitation",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v2",
+								"architecture",
+								"environments"
+							],
+							"query": [
+								{
+									"key": "pageSize",
+									"value": "20"
+								},
+								{
+									"key": "pageNumber",
+									"value": "1"
+								},
+								{
+									"key": "sort",
+									"value": "reprehenderit aliquip exercitation"
+								},
+								{
+									"key": "like",
+									"value": "reprehenderit aliquip exercitation"
+								}
+							]
+						}
+					},
+					"status": "Bad Request",
+					"code": 400,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"message\": \"An error occurred\",\n  \"errorId\": \"123e4567-e89b-12d3-a456-426655440000\",\n  \"meta\": {\n    \"enim_f4\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  },\n  \"validationDetails\": {\n    \"aliqua_5e5\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  }\n}"
+				},
+				{
+					"name": "Unauthorized.",
+					"originalRequest": {
+						"method": "GET",
+						"header": [
+							{
+								"description": "Added as a part of security scheme: bearer",
+								"key": "Authorization",
+								"value": "Bearer <token>"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v2/architecture/environments?pageSize=20&pageNumber=1&sort=reprehenderit aliquip exercitation&like=reprehenderit aliquip exercitation",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v2",
+								"architecture",
+								"environments"
+							],
+							"query": [
+								{
+									"key": "pageSize",
+									"value": "20"
+								},
+								{
+									"key": "pageNumber",
+									"value": "1"
+								},
+								{
+									"key": "sort",
+									"value": "reprehenderit aliquip exercitation"
+								},
+								{
+									"key": "like",
+									"value": "reprehenderit aliquip exercitation"
+								}
+							]
+						}
+					},
+					"status": "Unauthorized",
+					"code": 401,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"message\": \"An error occurred\",\n  \"errorId\": \"123e4567-e89b-12d3-a456-426655440000\",\n  \"meta\": {\n    \"enim_f4\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  },\n  \"validationDetails\": {\n    \"aliqua_5e5\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  }\n}"
+				},
+				{
+					"name": "Forbidden.",
+					"originalRequest": {
+						"method": "GET",
+						"header": [
+							{
+								"description": "Added as a part of security scheme: bearer",
+								"key": "Authorization",
+								"value": "Bearer <token>"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v2/architecture/environments?pageSize=20&pageNumber=1&sort=reprehenderit aliquip exercitation&like=reprehenderit aliquip exercitation",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v2",
+								"architecture",
+								"environments"
+							],
+							"query": [
+								{
+									"key": "pageSize",
+									"value": "20"
+								},
+								{
+									"key": "pageNumber",
+									"value": "1"
+								},
+								{
+									"key": "sort",
+									"value": "reprehenderit aliquip exercitation"
+								},
+								{
+									"key": "like",
+									"value": "reprehenderit aliquip exercitation"
+								}
+							]
+						}
+					},
+					"status": "Forbidden",
+					"code": 403,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"message\": \"An error occurred\",\n  \"errorId\": \"123e4567-e89b-12d3-a456-426655440000\",\n  \"meta\": {\n    \"enim_f4\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  },\n  \"validationDetails\": {\n    \"aliqua_5e5\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  }\n}"
+				},
+				{
+					"name": "Not Found.",
+					"originalRequest": {
+						"method": "GET",
+						"header": [
+							{
+								"description": "Added as a part of security scheme: bearer",
+								"key": "Authorization",
+								"value": "Bearer <token>"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v2/architecture/environments?pageSize=20&pageNumber=1&sort=reprehenderit aliquip exercitation&like=reprehenderit aliquip exercitation",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v2",
+								"architecture",
+								"environments"
+							],
+							"query": [
+								{
+									"key": "pageSize",
+									"value": "20"
+								},
+								{
+									"key": "pageNumber",
+									"value": "1"
+								},
+								{
+									"key": "sort",
+									"value": "reprehenderit aliquip exercitation"
+								},
+								{
+									"key": "like",
+									"value": "reprehenderit aliquip exercitation"
+								}
+							]
+						}
+					},
+					"status": "Not Found",
+					"code": 404,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"message\": \"An error occurred\",\n  \"errorId\": \"123e4567-e89b-12d3-a456-426655440000\",\n  \"meta\": {\n    \"enim_f4\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  },\n  \"validationDetails\": {\n    \"aliqua_5e5\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  }\n}"
+				},
+				{
+					"name": "Method Not Allowed",
+					"originalRequest": {
+						"method": "GET",
+						"header": [
+							{
+								"description": "Added as a part of security scheme: bearer",
+								"key": "Authorization",
+								"value": "Bearer <token>"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v2/architecture/environments?pageSize=20&pageNumber=1&sort=reprehenderit aliquip exercitation&like=reprehenderit aliquip exercitation",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v2",
+								"architecture",
+								"environments"
+							],
+							"query": [
+								{
+									"key": "pageSize",
+									"value": "20"
+								},
+								{
+									"key": "pageNumber",
+									"value": "1"
+								},
+								{
+									"key": "sort",
+									"value": "reprehenderit aliquip exercitation"
+								},
+								{
+									"key": "like",
+									"value": "reprehenderit aliquip exercitation"
+								}
+							]
+						}
+					},
+					"status": "Method Not Allowed",
+					"code": 405,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"message\": \"An error occurred\",\n  \"errorId\": \"123e4567-e89b-12d3-a456-426655440000\",\n  \"meta\": {\n    \"enim_f4\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  },\n  \"validationDetails\": {\n    \"aliqua_5e5\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  }\n}"
+				},
+				{
+					"name": "Internal Server Error.",
+					"originalRequest": {
+						"method": "GET",
+						"header": [
+							{
+								"description": "Added as a part of security scheme: bearer",
+								"key": "Authorization",
+								"value": "Bearer <token>"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v2/architecture/environments?pageSize=20&pageNumber=1&sort=reprehenderit aliquip exercitation&like=reprehenderit aliquip exercitation",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v2",
+								"architecture",
+								"environments"
+							],
+							"query": [
+								{
+									"key": "pageSize",
+									"value": "20"
+								},
+								{
+									"key": "pageNumber",
+									"value": "1"
+								},
+								{
+									"key": "sort",
+									"value": "reprehenderit aliquip exercitation"
+								},
+								{
+									"key": "like",
+									"value": "reprehenderit aliquip exercitation"
+								}
+							]
+						}
+					},
+					"status": "Internal Server Error",
+					"code": 500,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"message\": \"An error occurred\",\n  \"errorId\": \"123e4567-e89b-12d3-a456-426655440000\",\n  \"meta\": {\n    \"enim_f4\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  },\n  \"validationDetails\": {\n    \"aliqua_5e5\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  }\n}"
+				},
+				{
+					"name": "Not Implemented",
+					"originalRequest": {
+						"method": "GET",
+						"header": [
+							{
+								"description": "Added as a part of security scheme: bearer",
+								"key": "Authorization",
+								"value": "Bearer <token>"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v2/architecture/environments?pageSize=20&pageNumber=1&sort=reprehenderit aliquip exercitation&like=reprehenderit aliquip exercitation",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v2",
+								"architecture",
+								"environments"
+							],
+							"query": [
+								{
+									"key": "pageSize",
+									"value": "20"
+								},
+								{
+									"key": "pageNumber",
+									"value": "1"
+								},
+								{
+									"key": "sort",
+									"value": "reprehenderit aliquip exercitation"
+								},
+								{
+									"key": "like",
+									"value": "reprehenderit aliquip exercitation"
+								}
+							]
+						}
+					},
+					"status": "Not Implemented",
+					"code": 501,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"message\": \"An error occurred\",\n  \"errorId\": \"123e4567-e89b-12d3-a456-426655440000\",\n  \"meta\": {\n    \"enim_f4\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  },\n  \"validationDetails\": {\n    \"aliqua_5e5\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  }\n}"
+				},
+				{
+					"name": "Service Unavailable.",
+					"originalRequest": {
+						"method": "GET",
+						"header": [
+							{
+								"description": "Added as a part of security scheme: bearer",
+								"key": "Authorization",
+								"value": "Bearer <token>"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v2/architecture/environments?pageSize=20&pageNumber=1&sort=reprehenderit aliquip exercitation&like=reprehenderit aliquip exercitation",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v2",
+								"architecture",
+								"environments"
+							],
+							"query": [
+								{
+									"key": "pageSize",
+									"value": "20"
+								},
+								{
+									"key": "pageNumber",
+									"value": "1"
+								},
+								{
+									"key": "sort",
+									"value": "reprehenderit aliquip exercitation"
+								},
+								{
+									"key": "like",
+									"value": "reprehenderit aliquip exercitation"
+								}
+							]
+						}
+					},
+					"status": "Service Unavailable",
+					"code": 503,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"message\": \"An error occurred\",\n  \"errorId\": \"123e4567-e89b-12d3-a456-426655440000\",\n  \"meta\": {\n    \"enim_f4\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  },\n  \"validationDetails\": {\n    \"aliqua_5e5\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  }\n}"
+				},
+				{
+					"name": "Gateway Timeout.",
+					"originalRequest": {
+						"method": "GET",
+						"header": [
+							{
+								"description": "Added as a part of security scheme: bearer",
+								"key": "Authorization",
+								"value": "Bearer <token>"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v2/architecture/environments?pageSize=20&pageNumber=1&sort=reprehenderit aliquip exercitation&like=reprehenderit aliquip exercitation",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v2",
+								"architecture",
+								"environments"
+							],
+							"query": [
+								{
+									"key": "pageSize",
+									"value": "20"
+								},
+								{
+									"key": "pageNumber",
+									"value": "1"
+								},
+								{
+									"key": "sort",
+									"value": "reprehenderit aliquip exercitation"
+								},
+								{
+									"key": "like",
+									"value": "reprehenderit aliquip exercitation"
+								}
+							]
+						}
+					},
+					"status": "Gateway Timeout",
+					"code": 504,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"message\": \"An error occurred\",\n  \"errorId\": \"123e4567-e89b-12d3-a456-426655440000\",\n  \"meta\": {\n    \"enim_f4\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  },\n  \"validationDetails\": {\n    \"aliqua_5e5\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  }\n}"
+				}
+			]
+		},
+		{
+			"name": "Delete an environment",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"if(pm.variables.has(\"epEnvironmentIds\")){\r",
+							"    var epEnvironmentIds = pm.variables.get(\"epEnvironmentIds\");\r",
+							"    var epEnvironmentIdsCount = pm.variables.get(\"epEnvironmentIdsCount\");\r",
+							"\r",
+							"    console.log(\"epEnvironmentIds\",epEnvironmentIds );\r",
+							"    console.log(\"epEnvironmentIdsCount\",epEnvironmentIdsCount );\r",
+							"    console.log(\"current environment id\", epEnvironmentIds[epEnvironmentIdsCount] );\r",
+							"    pm.collectionVariables.set(\"epEnvironmentId\", epEnvironmentIds[epEnvironmentIdsCount]);\r",
+							"}\r",
+							"\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"//figure out whether to loop again\r",
+							"if(pm.variables.has(\"epEnvironmentIds\")){\r",
+							"    epEnvironmentIds = pm.variables.get(\"epEnvironmentIds\");\r",
+							"    epEnvironmentIdsCount = pm.variables.get(\"epEnvironmentIdsCount\");\r",
+							"    epEnvironmentIdsCount++;\r",
+							"    if(epEnvironmentIdsCount < epEnvironmentIds.length){\r",
+							"        console.log(\"count\", epEnvironmentIdsCount, epEnvironmentIds.length);\r",
+							"        pm.variables.set(\"epEnvironmentIdsCount\", epEnvironmentIdsCount);\r",
+							"        postman.setNextRequest(\"Delete an environment\");\r",
+							"    }else{\r",
+							"        postman.setNextRequest(\"Get all applications\");\r",
+							"    }\r",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "https://{{baseUrl}}/api/v2/platform/environments/:id",
+					"protocol": "https",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"v2",
+						"platform",
+						"environments",
+						":id"
+					],
+					"variable": [
+						{
+							"key": "id",
+							"value": "{{epEnvironmentId}}"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get all applications",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var response = JSON.parse(responseBody);\r",
+							"\r",
+							"var epApplicationIds = [];\r",
+							"\r",
+							"for(var i=0; i < response.data.length; i++){\r",
+							"        epApplicationIds.push(response.data[i].id);\r",
+							"}\r",
+							"pm.variables.set(\"epApplicationIds\", epApplicationIds);\r",
+							"console.log(\"ep app ids\", epApplicationIds, epApplicationIds.length)\r",
+							"if(epApplicationIds.length == 0  ){\r",
+							"    postman.setNextRequest(\"Get all application domain objects\");\r",
+							"}\r",
+							"\r",
+							"pm.variables.set(\"epApplicationIdCount\", 0);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json;charset=UTF-8"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/v2/architecture/applications?pageSize=100",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"v2",
+						"architecture",
+						"applications"
+					],
+					"query": [
+						{
+							"key": "pageSize",
+							"value": "100",
+							"description": "The number of applications to get per page."
+						},
+						{
+							"key": "pageNumber",
+							"value": "1",
+							"description": "The page number to get.",
+							"disabled": true
+						},
+						{
+							"key": "name",
+							"value": "reprehenderit aliquip exercitation",
+							"description": "Name of the application to match on.",
+							"disabled": true
+						},
+						{
+							"key": "applicationDomainId",
+							"value": "reprehenderit aliquip exercitation",
+							"description": "Match only applications in the given application domain.",
+							"disabled": true
+						},
+						{
+							"key": "ids",
+							"value": "dolore sunt irure",
+							"description": "Match only applications with the given IDs separated by commas.",
+							"disabled": true
+						},
+						{
+							"key": "ids",
+							"value": "sample value",
+							"description": "Match only applications with the given IDs separated by commas.",
+							"disabled": true
+						},
+						{
+							"key": "sort",
+							"value": "reprehenderit aliquip exercitation",
+							"description": "Sort based on the provided parameters. <br> The value can either be a standalone field name (`?sort=<field>`) or a field and direction, which must be delimited by a colon (`?sort=<field>:<asc|desc>`). If the direction is not specified, the default is ascending.",
+							"disabled": true
+						},
+						{
+							"key": "customAttributes",
+							"value": "searching by single custom attribute definition: `color==red`. <br>Searching by single custom attribute name: `color`. <br>Searching by multiple custom attribute definition: `color==red;security==high`. <br>Searching by  multiple custom attribute name: `color;security`. <br>Searching by  multiple custom attribute name `AND` custom attribute definition: `color;security==high`",
+							"description": "Returns the entities that match the custom attribute filter.<br>To filter by custom attribute name and value, use the format: `customAttributes=<custom-attribute-name>==<custom-attribute-value>`. <br>To filter by custom attribute name, use the format: `customAttributes=<custom-attribute-name>`. <br>The filter supports the `AND` operator for multiple custom attribute definitions (not multiple values for a given definition). Use `;` (`semicolon`) to separate multiple queries with `AND` operation. <br>Note: the filter only supports custom attribute values containing characters in `[a-zA-Z0-9_\\-\\. ]`.",
+							"disabled": true
+						},
+						{
+							"key": "applicationType",
+							"value": "reprehenderit aliquip exercitation",
+							"description": "Match only applications with the given applicationType.",
+							"disabled": true
+						}
+					]
+				},
+				"description": "Use this API to retrieve a list of applications that match the given parameters."
+			},
+			"response": [
+				{
+					"name": "Retrieve a list of applications and the accompanying metadata.",
+					"originalRequest": {
+						"method": "GET",
+						"header": [
+							{
+								"description": "Added as a part of security scheme: bearer",
+								"key": "Authorization",
+								"value": "Bearer <token>"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v2/architecture/applications?pageSize=20&pageNumber=1&name=reprehenderit aliquip exercitation&applicationDomainId=reprehenderit aliquip exercitation&ids=velit irure eiusmod dolore&ids=culpa&sort=reprehenderit aliquip exercitation&customAttributes=searching by single custom attribute definition: `color==red`. <br>Searching by single custom attribute name: `color`. <br>Searching by multiple custom attribute definition: `color==red;security==high`. <br>Searching by  multiple custom attribute name: `color;security`. <br>Searching by  multiple custom attribute name `AND` custom attribute definition: `color;security==high`&applicationType=reprehenderit aliquip exercitation",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v2",
+								"architecture",
+								"applications"
+							],
+							"query": [
+								{
+									"key": "pageSize",
+									"value": "20"
+								},
+								{
+									"key": "pageNumber",
+									"value": "1"
+								},
+								{
+									"key": "name",
+									"value": "reprehenderit aliquip exercitation"
+								},
+								{
+									"key": "applicationDomainId",
+									"value": "reprehenderit aliquip exercitation"
+								},
+								{
+									"key": "ids",
+									"value": "velit irure eiusmod dolore"
+								},
+								{
+									"key": "ids",
+									"value": "culpa"
+								},
+								{
+									"key": "sort",
+									"value": "reprehenderit aliquip exercitation"
+								},
+								{
+									"key": "customAttributes",
+									"value": "searching by single custom attribute definition: `color==red`. <br>Searching by single custom attribute name: `color`. <br>Searching by multiple custom attribute definition: `color==red;security==high`. <br>Searching by  multiple custom attribute name: `color;security`. <br>Searching by  multiple custom attribute name `AND` custom attribute definition: `color;security==high`"
+								},
+								{
+									"key": "applicationType",
+									"value": "reprehenderit aliquip exercitation"
+								}
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json;charset=UTF-8"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"data\": [\n    {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    },\n    {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  ],\n  \"meta\": {\n    \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n  }\n}"
+				},
+				{
+					"name": "Bad Request.",
+					"originalRequest": {
+						"method": "GET",
+						"header": [
+							{
+								"description": "Added as a part of security scheme: bearer",
+								"key": "Authorization",
+								"value": "Bearer <token>"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v2/architecture/applications?pageSize=20&pageNumber=1&name=reprehenderit aliquip exercitation&applicationDomainId=reprehenderit aliquip exercitation&ids=velit irure eiusmod dolore&ids=culpa&sort=reprehenderit aliquip exercitation&customAttributes=searching by single custom attribute definition: `color==red`. <br>Searching by single custom attribute name: `color`. <br>Searching by multiple custom attribute definition: `color==red;security==high`. <br>Searching by  multiple custom attribute name: `color;security`. <br>Searching by  multiple custom attribute name `AND` custom attribute definition: `color;security==high`&applicationType=reprehenderit aliquip exercitation",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v2",
+								"architecture",
+								"applications"
+							],
+							"query": [
+								{
+									"key": "pageSize",
+									"value": "20"
+								},
+								{
+									"key": "pageNumber",
+									"value": "1"
+								},
+								{
+									"key": "name",
+									"value": "reprehenderit aliquip exercitation"
+								},
+								{
+									"key": "applicationDomainId",
+									"value": "reprehenderit aliquip exercitation"
+								},
+								{
+									"key": "ids",
+									"value": "velit irure eiusmod dolore"
+								},
+								{
+									"key": "ids",
+									"value": "culpa"
+								},
+								{
+									"key": "sort",
+									"value": "reprehenderit aliquip exercitation"
+								},
+								{
+									"key": "customAttributes",
+									"value": "searching by single custom attribute definition: `color==red`. <br>Searching by single custom attribute name: `color`. <br>Searching by multiple custom attribute definition: `color==red;security==high`. <br>Searching by  multiple custom attribute name: `color;security`. <br>Searching by  multiple custom attribute name `AND` custom attribute definition: `color;security==high`"
+								},
+								{
+									"key": "applicationType",
+									"value": "reprehenderit aliquip exercitation"
+								}
+							]
+						}
+					},
+					"status": "Bad Request",
+					"code": 400,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"message\": \"An error occurred\",\n  \"errorId\": \"123e4567-e89b-12d3-a456-426655440000\",\n  \"meta\": {\n    \"enim_f4\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  },\n  \"validationDetails\": {\n    \"aliqua_5e5\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  }\n}"
+				},
+				{
+					"name": "Unauthorized.",
+					"originalRequest": {
+						"method": "GET",
+						"header": [
+							{
+								"description": "Added as a part of security scheme: bearer",
+								"key": "Authorization",
+								"value": "Bearer <token>"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v2/architecture/applications?pageSize=20&pageNumber=1&name=reprehenderit aliquip exercitation&applicationDomainId=reprehenderit aliquip exercitation&ids=velit irure eiusmod dolore&ids=culpa&sort=reprehenderit aliquip exercitation&customAttributes=searching by single custom attribute definition: `color==red`. <br>Searching by single custom attribute name: `color`. <br>Searching by multiple custom attribute definition: `color==red;security==high`. <br>Searching by  multiple custom attribute name: `color;security`. <br>Searching by  multiple custom attribute name `AND` custom attribute definition: `color;security==high`&applicationType=reprehenderit aliquip exercitation",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v2",
+								"architecture",
+								"applications"
+							],
+							"query": [
+								{
+									"key": "pageSize",
+									"value": "20"
+								},
+								{
+									"key": "pageNumber",
+									"value": "1"
+								},
+								{
+									"key": "name",
+									"value": "reprehenderit aliquip exercitation"
+								},
+								{
+									"key": "applicationDomainId",
+									"value": "reprehenderit aliquip exercitation"
+								},
+								{
+									"key": "ids",
+									"value": "velit irure eiusmod dolore"
+								},
+								{
+									"key": "ids",
+									"value": "culpa"
+								},
+								{
+									"key": "sort",
+									"value": "reprehenderit aliquip exercitation"
+								},
+								{
+									"key": "customAttributes",
+									"value": "searching by single custom attribute definition: `color==red`. <br>Searching by single custom attribute name: `color`. <br>Searching by multiple custom attribute definition: `color==red;security==high`. <br>Searching by  multiple custom attribute name: `color;security`. <br>Searching by  multiple custom attribute name `AND` custom attribute definition: `color;security==high`"
+								},
+								{
+									"key": "applicationType",
+									"value": "reprehenderit aliquip exercitation"
+								}
+							]
+						}
+					},
+					"status": "Unauthorized",
+					"code": 401,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"message\": \"An error occurred\",\n  \"errorId\": \"123e4567-e89b-12d3-a456-426655440000\",\n  \"meta\": {\n    \"enim_f4\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  },\n  \"validationDetails\": {\n    \"aliqua_5e5\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  }\n}"
+				},
+				{
+					"name": "Forbidden.",
+					"originalRequest": {
+						"method": "GET",
+						"header": [
+							{
+								"description": "Added as a part of security scheme: bearer",
+								"key": "Authorization",
+								"value": "Bearer <token>"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v2/architecture/applications?pageSize=20&pageNumber=1&name=reprehenderit aliquip exercitation&applicationDomainId=reprehenderit aliquip exercitation&ids=velit irure eiusmod dolore&ids=culpa&sort=reprehenderit aliquip exercitation&customAttributes=searching by single custom attribute definition: `color==red`. <br>Searching by single custom attribute name: `color`. <br>Searching by multiple custom attribute definition: `color==red;security==high`. <br>Searching by  multiple custom attribute name: `color;security`. <br>Searching by  multiple custom attribute name `AND` custom attribute definition: `color;security==high`&applicationType=reprehenderit aliquip exercitation",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v2",
+								"architecture",
+								"applications"
+							],
+							"query": [
+								{
+									"key": "pageSize",
+									"value": "20"
+								},
+								{
+									"key": "pageNumber",
+									"value": "1"
+								},
+								{
+									"key": "name",
+									"value": "reprehenderit aliquip exercitation"
+								},
+								{
+									"key": "applicationDomainId",
+									"value": "reprehenderit aliquip exercitation"
+								},
+								{
+									"key": "ids",
+									"value": "velit irure eiusmod dolore"
+								},
+								{
+									"key": "ids",
+									"value": "culpa"
+								},
+								{
+									"key": "sort",
+									"value": "reprehenderit aliquip exercitation"
+								},
+								{
+									"key": "customAttributes",
+									"value": "searching by single custom attribute definition: `color==red`. <br>Searching by single custom attribute name: `color`. <br>Searching by multiple custom attribute definition: `color==red;security==high`. <br>Searching by  multiple custom attribute name: `color;security`. <br>Searching by  multiple custom attribute name `AND` custom attribute definition: `color;security==high`"
+								},
+								{
+									"key": "applicationType",
+									"value": "reprehenderit aliquip exercitation"
+								}
+							]
+						}
+					},
+					"status": "Forbidden",
+					"code": 403,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"message\": \"An error occurred\",\n  \"errorId\": \"123e4567-e89b-12d3-a456-426655440000\",\n  \"meta\": {\n    \"enim_f4\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  },\n  \"validationDetails\": {\n    \"aliqua_5e5\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  }\n}"
+				},
+				{
+					"name": "Not Found.",
+					"originalRequest": {
+						"method": "GET",
+						"header": [
+							{
+								"description": "Added as a part of security scheme: bearer",
+								"key": "Authorization",
+								"value": "Bearer <token>"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v2/architecture/applications?pageSize=20&pageNumber=1&name=reprehenderit aliquip exercitation&applicationDomainId=reprehenderit aliquip exercitation&ids=velit irure eiusmod dolore&ids=culpa&sort=reprehenderit aliquip exercitation&customAttributes=searching by single custom attribute definition: `color==red`. <br>Searching by single custom attribute name: `color`. <br>Searching by multiple custom attribute definition: `color==red;security==high`. <br>Searching by  multiple custom attribute name: `color;security`. <br>Searching by  multiple custom attribute name `AND` custom attribute definition: `color;security==high`&applicationType=reprehenderit aliquip exercitation",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v2",
+								"architecture",
+								"applications"
+							],
+							"query": [
+								{
+									"key": "pageSize",
+									"value": "20"
+								},
+								{
+									"key": "pageNumber",
+									"value": "1"
+								},
+								{
+									"key": "name",
+									"value": "reprehenderit aliquip exercitation"
+								},
+								{
+									"key": "applicationDomainId",
+									"value": "reprehenderit aliquip exercitation"
+								},
+								{
+									"key": "ids",
+									"value": "velit irure eiusmod dolore"
+								},
+								{
+									"key": "ids",
+									"value": "culpa"
+								},
+								{
+									"key": "sort",
+									"value": "reprehenderit aliquip exercitation"
+								},
+								{
+									"key": "customAttributes",
+									"value": "searching by single custom attribute definition: `color==red`. <br>Searching by single custom attribute name: `color`. <br>Searching by multiple custom attribute definition: `color==red;security==high`. <br>Searching by  multiple custom attribute name: `color;security`. <br>Searching by  multiple custom attribute name `AND` custom attribute definition: `color;security==high`"
+								},
+								{
+									"key": "applicationType",
+									"value": "reprehenderit aliquip exercitation"
+								}
+							]
+						}
+					},
+					"status": "Not Found",
+					"code": 404,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"message\": \"An error occurred\",\n  \"errorId\": \"123e4567-e89b-12d3-a456-426655440000\",\n  \"meta\": {\n    \"enim_f4\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  },\n  \"validationDetails\": {\n    \"aliqua_5e5\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  }\n}"
+				},
+				{
+					"name": "Method Not Allowed",
+					"originalRequest": {
+						"method": "GET",
+						"header": [
+							{
+								"description": "Added as a part of security scheme: bearer",
+								"key": "Authorization",
+								"value": "Bearer <token>"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v2/architecture/applications?pageSize=20&pageNumber=1&name=reprehenderit aliquip exercitation&applicationDomainId=reprehenderit aliquip exercitation&ids=velit irure eiusmod dolore&ids=culpa&sort=reprehenderit aliquip exercitation&customAttributes=searching by single custom attribute definition: `color==red`. <br>Searching by single custom attribute name: `color`. <br>Searching by multiple custom attribute definition: `color==red;security==high`. <br>Searching by  multiple custom attribute name: `color;security`. <br>Searching by  multiple custom attribute name `AND` custom attribute definition: `color;security==high`&applicationType=reprehenderit aliquip exercitation",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v2",
+								"architecture",
+								"applications"
+							],
+							"query": [
+								{
+									"key": "pageSize",
+									"value": "20"
+								},
+								{
+									"key": "pageNumber",
+									"value": "1"
+								},
+								{
+									"key": "name",
+									"value": "reprehenderit aliquip exercitation"
+								},
+								{
+									"key": "applicationDomainId",
+									"value": "reprehenderit aliquip exercitation"
+								},
+								{
+									"key": "ids",
+									"value": "velit irure eiusmod dolore"
+								},
+								{
+									"key": "ids",
+									"value": "culpa"
+								},
+								{
+									"key": "sort",
+									"value": "reprehenderit aliquip exercitation"
+								},
+								{
+									"key": "customAttributes",
+									"value": "searching by single custom attribute definition: `color==red`. <br>Searching by single custom attribute name: `color`. <br>Searching by multiple custom attribute definition: `color==red;security==high`. <br>Searching by  multiple custom attribute name: `color;security`. <br>Searching by  multiple custom attribute name `AND` custom attribute definition: `color;security==high`"
+								},
+								{
+									"key": "applicationType",
+									"value": "reprehenderit aliquip exercitation"
+								}
+							]
+						}
+					},
+					"status": "Method Not Allowed",
+					"code": 405,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"message\": \"An error occurred\",\n  \"errorId\": \"123e4567-e89b-12d3-a456-426655440000\",\n  \"meta\": {\n    \"enim_f4\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  },\n  \"validationDetails\": {\n    \"aliqua_5e5\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  }\n}"
+				},
+				{
+					"name": "Internal Server Error.",
+					"originalRequest": {
+						"method": "GET",
+						"header": [
+							{
+								"description": "Added as a part of security scheme: bearer",
+								"key": "Authorization",
+								"value": "Bearer <token>"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v2/architecture/applications?pageSize=20&pageNumber=1&name=reprehenderit aliquip exercitation&applicationDomainId=reprehenderit aliquip exercitation&ids=velit irure eiusmod dolore&ids=culpa&sort=reprehenderit aliquip exercitation&customAttributes=searching by single custom attribute definition: `color==red`. <br>Searching by single custom attribute name: `color`. <br>Searching by multiple custom attribute definition: `color==red;security==high`. <br>Searching by  multiple custom attribute name: `color;security`. <br>Searching by  multiple custom attribute name `AND` custom attribute definition: `color;security==high`&applicationType=reprehenderit aliquip exercitation",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v2",
+								"architecture",
+								"applications"
+							],
+							"query": [
+								{
+									"key": "pageSize",
+									"value": "20"
+								},
+								{
+									"key": "pageNumber",
+									"value": "1"
+								},
+								{
+									"key": "name",
+									"value": "reprehenderit aliquip exercitation"
+								},
+								{
+									"key": "applicationDomainId",
+									"value": "reprehenderit aliquip exercitation"
+								},
+								{
+									"key": "ids",
+									"value": "velit irure eiusmod dolore"
+								},
+								{
+									"key": "ids",
+									"value": "culpa"
+								},
+								{
+									"key": "sort",
+									"value": "reprehenderit aliquip exercitation"
+								},
+								{
+									"key": "customAttributes",
+									"value": "searching by single custom attribute definition: `color==red`. <br>Searching by single custom attribute name: `color`. <br>Searching by multiple custom attribute definition: `color==red;security==high`. <br>Searching by  multiple custom attribute name: `color;security`. <br>Searching by  multiple custom attribute name `AND` custom attribute definition: `color;security==high`"
+								},
+								{
+									"key": "applicationType",
+									"value": "reprehenderit aliquip exercitation"
+								}
+							]
+						}
+					},
+					"status": "Internal Server Error",
+					"code": 500,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"message\": \"An error occurred\",\n  \"errorId\": \"123e4567-e89b-12d3-a456-426655440000\",\n  \"meta\": {\n    \"enim_f4\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  },\n  \"validationDetails\": {\n    \"aliqua_5e5\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  }\n}"
+				},
+				{
+					"name": "Not Implemented",
+					"originalRequest": {
+						"method": "GET",
+						"header": [
+							{
+								"description": "Added as a part of security scheme: bearer",
+								"key": "Authorization",
+								"value": "Bearer <token>"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v2/architecture/applications?pageSize=20&pageNumber=1&name=reprehenderit aliquip exercitation&applicationDomainId=reprehenderit aliquip exercitation&ids=velit irure eiusmod dolore&ids=culpa&sort=reprehenderit aliquip exercitation&customAttributes=searching by single custom attribute definition: `color==red`. <br>Searching by single custom attribute name: `color`. <br>Searching by multiple custom attribute definition: `color==red;security==high`. <br>Searching by  multiple custom attribute name: `color;security`. <br>Searching by  multiple custom attribute name `AND` custom attribute definition: `color;security==high`&applicationType=reprehenderit aliquip exercitation",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v2",
+								"architecture",
+								"applications"
+							],
+							"query": [
+								{
+									"key": "pageSize",
+									"value": "20"
+								},
+								{
+									"key": "pageNumber",
+									"value": "1"
+								},
+								{
+									"key": "name",
+									"value": "reprehenderit aliquip exercitation"
+								},
+								{
+									"key": "applicationDomainId",
+									"value": "reprehenderit aliquip exercitation"
+								},
+								{
+									"key": "ids",
+									"value": "velit irure eiusmod dolore"
+								},
+								{
+									"key": "ids",
+									"value": "culpa"
+								},
+								{
+									"key": "sort",
+									"value": "reprehenderit aliquip exercitation"
+								},
+								{
+									"key": "customAttributes",
+									"value": "searching by single custom attribute definition: `color==red`. <br>Searching by single custom attribute name: `color`. <br>Searching by multiple custom attribute definition: `color==red;security==high`. <br>Searching by  multiple custom attribute name: `color;security`. <br>Searching by  multiple custom attribute name `AND` custom attribute definition: `color;security==high`"
+								},
+								{
+									"key": "applicationType",
+									"value": "reprehenderit aliquip exercitation"
+								}
+							]
+						}
+					},
+					"status": "Not Implemented",
+					"code": 501,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"message\": \"An error occurred\",\n  \"errorId\": \"123e4567-e89b-12d3-a456-426655440000\",\n  \"meta\": {\n    \"enim_f4\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  },\n  \"validationDetails\": {\n    \"aliqua_5e5\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  }\n}"
+				},
+				{
+					"name": "Service Unavailable.",
+					"originalRequest": {
+						"method": "GET",
+						"header": [
+							{
+								"description": "Added as a part of security scheme: bearer",
+								"key": "Authorization",
+								"value": "Bearer <token>"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v2/architecture/applications?pageSize=20&pageNumber=1&name=reprehenderit aliquip exercitation&applicationDomainId=reprehenderit aliquip exercitation&ids=velit irure eiusmod dolore&ids=culpa&sort=reprehenderit aliquip exercitation&customAttributes=searching by single custom attribute definition: `color==red`. <br>Searching by single custom attribute name: `color`. <br>Searching by multiple custom attribute definition: `color==red;security==high`. <br>Searching by  multiple custom attribute name: `color;security`. <br>Searching by  multiple custom attribute name `AND` custom attribute definition: `color;security==high`&applicationType=reprehenderit aliquip exercitation",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v2",
+								"architecture",
+								"applications"
+							],
+							"query": [
+								{
+									"key": "pageSize",
+									"value": "20"
+								},
+								{
+									"key": "pageNumber",
+									"value": "1"
+								},
+								{
+									"key": "name",
+									"value": "reprehenderit aliquip exercitation"
+								},
+								{
+									"key": "applicationDomainId",
+									"value": "reprehenderit aliquip exercitation"
+								},
+								{
+									"key": "ids",
+									"value": "velit irure eiusmod dolore"
+								},
+								{
+									"key": "ids",
+									"value": "culpa"
+								},
+								{
+									"key": "sort",
+									"value": "reprehenderit aliquip exercitation"
+								},
+								{
+									"key": "customAttributes",
+									"value": "searching by single custom attribute definition: `color==red`. <br>Searching by single custom attribute name: `color`. <br>Searching by multiple custom attribute definition: `color==red;security==high`. <br>Searching by  multiple custom attribute name: `color;security`. <br>Searching by  multiple custom attribute name `AND` custom attribute definition: `color;security==high`"
+								},
+								{
+									"key": "applicationType",
+									"value": "reprehenderit aliquip exercitation"
+								}
+							]
+						}
+					},
+					"status": "Service Unavailable",
+					"code": 503,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"message\": \"An error occurred\",\n  \"errorId\": \"123e4567-e89b-12d3-a456-426655440000\",\n  \"meta\": {\n    \"enim_f4\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  },\n  \"validationDetails\": {\n    \"aliqua_5e5\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  }\n}"
+				},
+				{
+					"name": "Gateway Timeout.",
+					"originalRequest": {
+						"method": "GET",
+						"header": [
+							{
+								"description": "Added as a part of security scheme: bearer",
+								"key": "Authorization",
+								"value": "Bearer <token>"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v2/architecture/applications?pageSize=20&pageNumber=1&name=reprehenderit aliquip exercitation&applicationDomainId=reprehenderit aliquip exercitation&ids=velit irure eiusmod dolore&ids=culpa&sort=reprehenderit aliquip exercitation&customAttributes=searching by single custom attribute definition: `color==red`. <br>Searching by single custom attribute name: `color`. <br>Searching by multiple custom attribute definition: `color==red;security==high`. <br>Searching by  multiple custom attribute name: `color;security`. <br>Searching by  multiple custom attribute name `AND` custom attribute definition: `color;security==high`&applicationType=reprehenderit aliquip exercitation",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v2",
+								"architecture",
+								"applications"
+							],
+							"query": [
+								{
+									"key": "pageSize",
+									"value": "20"
+								},
+								{
+									"key": "pageNumber",
+									"value": "1"
+								},
+								{
+									"key": "name",
+									"value": "reprehenderit aliquip exercitation"
+								},
+								{
+									"key": "applicationDomainId",
+									"value": "reprehenderit aliquip exercitation"
+								},
+								{
+									"key": "ids",
+									"value": "velit irure eiusmod dolore"
+								},
+								{
+									"key": "ids",
+									"value": "culpa"
+								},
+								{
+									"key": "sort",
+									"value": "reprehenderit aliquip exercitation"
+								},
+								{
+									"key": "customAttributes",
+									"value": "searching by single custom attribute definition: `color==red`. <br>Searching by single custom attribute name: `color`. <br>Searching by multiple custom attribute definition: `color==red;security==high`. <br>Searching by  multiple custom attribute name: `color;security`. <br>Searching by  multiple custom attribute name `AND` custom attribute definition: `color;security==high`"
+								},
+								{
+									"key": "applicationType",
+									"value": "reprehenderit aliquip exercitation"
+								}
+							]
+						}
+					},
+					"status": "Gateway Timeout",
+					"code": 504,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"message\": \"An error occurred\",\n  \"errorId\": \"123e4567-e89b-12d3-a456-426655440000\",\n  \"meta\": {\n    \"enim_f4\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  },\n  \"validationDetails\": {\n    \"aliqua_5e5\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  }\n}"
+				},
+				{
+					"name": "Gets the application objects",
+					"originalRequest": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json;charset=UTF-8"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v2/architecture/applications",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v2",
+								"architecture",
+								"applications"
+							],
+							"query": [
+								{
+									"key": "pageSize",
+									"value": "20",
+									"description": "The number of applications to get per page.",
+									"disabled": true
+								},
+								{
+									"key": "pageNumber",
+									"value": "1",
+									"description": "The page number to get.",
+									"disabled": true
+								},
+								{
+									"key": "name",
+									"value": "reprehenderit aliquip exercitation",
+									"description": "Name of the application to match on.",
+									"disabled": true
+								},
+								{
+									"key": "applicationDomainId",
+									"value": "reprehenderit aliquip exercitation",
+									"description": "Match only applications in the given application domain.",
+									"disabled": true
+								},
+								{
+									"key": "ids",
+									"value": "dolore sunt irure",
+									"description": "Match only applications with the given IDs separated by commas.",
+									"disabled": true
+								},
+								{
+									"key": "ids",
+									"value": "quis",
+									"description": "Match only applications with the given IDs separated by commas.",
+									"disabled": true
+								},
+								{
+									"key": "sort",
+									"value": "reprehenderit aliquip exercitation",
+									"description": "Sort based on the provided parameters. <br> The value can either be a standalone field name (`?sort=<field>`) or a field and direction, which must be delimited by a colon (`?sort=<field>:<asc|desc>`). If the direction is not specified, the default is ascending.",
+									"disabled": true
+								},
+								{
+									"key": "customAttributes",
+									"value": "searching by single custom attribute definition: `color==red`. <br>Searching by single custom attribute name: `color`. <br>Searching by multiple custom attribute definition: `color==red;security==high`. <br>Searching by  multiple custom attribute name: `color;security`. <br>Searching by  multiple custom attribute name `AND` custom attribute definition: `color;security==high`",
+									"description": "Returns the entities that match the custom attribute filter.<br>To filter by custom attribute name and value, use the format: `customAttributes=<custom-attribute-name>==<custom-attribute-value>`. <br>To filter by custom attribute name, use the format: `customAttributes=<custom-attribute-name>`. <br>The filter supports the `AND` operator for multiple custom attribute definitions (not multiple values for a given definition). Use `;` (`semicolon`) to separate multiple queries with `AND` operation. <br>Note: the filter only supports custom attribute values containing characters in `[a-zA-Z0-9_\\-\\. ]`.",
+									"disabled": true
+								},
+								{
+									"key": "applicationType",
+									"value": "reprehenderit aliquip exercitation",
+									"description": "Match only applications with the given applicationType.",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Date",
+							"value": "Mon, 05 Dec 2022 16:23:04 GMT"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json;charset=UTF-8"
+						},
+						{
+							"key": "Transfer-Encoding",
+							"value": "chunked"
+						},
+						{
+							"key": "Connection",
+							"value": "keep-alive"
+						},
+						{
+							"key": "Strict-Transport-Security",
+							"value": "max-age=31536000; includeSubDomains"
+						},
+						{
+							"key": "Cache-Control",
+							"value": "no-cache; no-store; must-revalidate"
+						},
+						{
+							"key": "Pragma",
+							"value": "no-cache"
+						},
+						{
+							"key": "Expires",
+							"value": "0"
+						},
+						{
+							"key": "Set-Cookie",
+							"value": "rememberMe=deleteMe; Path=/; Max-Age=0; Expires=Sun, 04-Dec-2022 16:23:04 GMT; SameSite=lax"
+						},
+						{
+							"key": "Vary",
+							"value": "accept-encoding"
+						},
+						{
+							"key": "Content-Encoding",
+							"value": "gzip"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"data\": [\n        {\n            \"createdTime\": \"2022-12-05T13:57:12.195Z\",\n            \"updatedTime\": \"2022-12-05T13:57:21.590Z\",\n            \"createdBy\": \"kh8psmt8dnb\",\n            \"changedBy\": \"kh8psmt8dnb\",\n            \"id\": \"1jmiwwxg81n\",\n            \"name\": \"Customer Facing Mobile Application\",\n            \"applicationType\": \"standard\",\n            \"brokerType\": \"solace\",\n            \"applicationDomainId\": \"9strsc2i2ns\",\n            \"numberOfVersions\": 6,\n            \"customAttributes\": [],\n            \"type\": \"application\"\n        },\n        {\n            \"createdTime\": \"2022-12-05T13:57:12.265Z\",\n            \"updatedTime\": \"2022-12-05T13:57:24.969Z\",\n            \"createdBy\": \"kh8psmt8dnb\",\n            \"changedBy\": \"kh8psmt8dnb\",\n            \"id\": \"pbipd91nj0x\",\n            \"name\": \"Customer Fraud Prevention\",\n            \"applicationType\": \"standard\",\n            \"brokerType\": \"solace\",\n            \"applicationDomainId\": \"fncxkjwpx24\",\n            \"numberOfVersions\": 4,\n            \"customAttributes\": [],\n            \"type\": \"application\"\n        },\n        {\n            \"createdTime\": \"2022-12-05T13:57:12.277Z\",\n            \"updatedTime\": \"2022-12-05T13:57:25.316Z\",\n            \"createdBy\": \"kh8psmt8dnb\",\n            \"changedBy\": \"kh8psmt8dnb\",\n            \"id\": \"7ccffovh9ah\",\n            \"name\": \"Customer Loyalty Management\",\n            \"applicationType\": \"standard\",\n            \"brokerType\": \"solace\",\n            \"applicationDomainId\": \"fncxkjwpx24\",\n            \"numberOfVersions\": 4,\n            \"customAttributes\": [],\n            \"type\": \"application\"\n        },\n        {\n            \"createdTime\": \"2022-12-05T13:57:12.207Z\",\n            \"updatedTime\": \"2022-12-05T13:57:21.820Z\",\n            \"createdBy\": \"kh8psmt8dnb\",\n            \"changedBy\": \"kh8psmt8dnb\",\n            \"id\": \"352utl3pg8b\",\n            \"name\": \"Data Product - Daily Store Sales Summary\",\n            \"applicationType\": \"standard\",\n            \"brokerType\": \"solace\",\n            \"applicationDomainId\": \"9strsc2i2ns\",\n            \"numberOfVersions\": 3,\n            \"customAttributes\": [],\n            \"type\": \"application\"\n        },\n        {\n            \"createdTime\": \"2022-12-05T13:57:12.218Z\",\n            \"updatedTime\": \"2022-12-05T13:57:21.496Z\",\n            \"createdBy\": \"kh8psmt8dnb\",\n            \"changedBy\": \"kh8psmt8dnb\",\n            \"id\": \"20vexd7tqj5\",\n            \"name\": \"Data Product - Real-time Customer Sentiment\",\n            \"applicationType\": \"standard\",\n            \"brokerType\": \"solace\",\n            \"applicationDomainId\": \"9strsc2i2ns\",\n            \"numberOfVersions\": 4,\n            \"customAttributes\": [],\n            \"type\": \"application\"\n        },\n        {\n            \"createdTime\": \"2022-12-05T13:57:12.230Z\",\n            \"updatedTime\": \"2022-12-05T13:57:21.697Z\",\n            \"createdBy\": \"kh8psmt8dnb\",\n            \"changedBy\": \"kh8psmt8dnb\",\n            \"id\": \"cydv26lagnu\",\n            \"name\": \"In-Store Fulfillment Mobile Application\",\n            \"applicationType\": \"standard\",\n            \"brokerType\": \"solace\",\n            \"applicationDomainId\": \"9strsc2i2ns\",\n            \"numberOfVersions\": 2,\n            \"customAttributes\": [],\n            \"type\": \"application\"\n        },\n        {\n            \"createdTime\": \"2022-12-05T13:57:12.242Z\",\n            \"updatedTime\": \"2022-12-05T13:57:21.411Z\",\n            \"createdBy\": \"kh8psmt8dnb\",\n            \"changedBy\": \"kh8psmt8dnb\",\n            \"id\": \"zbo01jikrga\",\n            \"name\": \"Point of Sale System\",\n            \"applicationType\": \"standard\",\n            \"brokerType\": \"solace\",\n            \"applicationDomainId\": \"9strsc2i2ns\",\n            \"numberOfVersions\": 2,\n            \"customAttributes\": [],\n            \"type\": \"application\"\n        },\n        {\n            \"createdTime\": \"2022-12-05T13:57:12.253Z\",\n            \"updatedTime\": \"2022-12-05T13:57:21.930Z\",\n            \"createdBy\": \"kh8psmt8dnb\",\n            \"changedBy\": \"kh8psmt8dnb\",\n            \"id\": \"avdsaiv03b0\",\n            \"name\": \"Smart Shelf Inventory Control\",\n            \"applicationType\": \"standard\",\n            \"brokerType\": \"solace\",\n            \"applicationDomainId\": \"9strsc2i2ns\",\n            \"numberOfVersions\": 3,\n            \"customAttributes\": [],\n            \"type\": \"application\"\n        },\n        {\n            \"createdTime\": \"2022-12-05T13:57:12.288Z\",\n            \"updatedTime\": \"2022-12-05T13:57:25.220Z\",\n            \"createdBy\": \"kh8psmt8dnb\",\n            \"changedBy\": \"kh8psmt8dnb\",\n            \"id\": \"4488jbocigr\",\n            \"name\": \"Workday SaaS Application\",\n            \"applicationType\": \"standard\",\n            \"brokerType\": \"solace\",\n            \"applicationDomainId\": \"fncxkjwpx24\",\n            \"numberOfVersions\": 1,\n            \"customAttributes\": [],\n            \"type\": \"application\"\n        }\n    ],\n    \"meta\": {\n        \"pagination\": {\n            \"pageNumber\": 1,\n            \"count\": 9,\n            \"pageSize\": 20,\n            \"nextPage\": null,\n            \"totalPages\": 1\n        }\n    }\n}"
+				}
+			]
+		},
+		{
+			"name": "Deletes an application object instance",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"if(pm.variables.has(\"epApplicationIds\")){\r",
+							"    var epApplicationIds = pm.variables.get(\"epApplicationIds\");\r",
+							"    var epApplicationIdCount = pm.variables.get(\"epApplicationIdCount\");\r",
+							"\r",
+							"    console.log(\"epApplicationIds\",epApplicationIds );\r",
+							"    console.log(\"epApplicationIdCount\",epApplicationIdCount );\r",
+							"    console.log(\"current application id\", epApplicationIds[epApplicationIdCount] );\r",
+							"    pm.collectionVariables.set(\"epApplicationId\", epApplicationIds[epApplicationIdCount]);\r",
+							"}\r",
+							"\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"//figure out whether to loop again\r",
+							"if(pm.variables.has(\"epApplicationIds\")){\r",
+							"    epApplicationIds = pm.variables.get(\"epApplicationIds\");\r",
+							"    epApplicationIdCount = pm.variables.get(\"epApplicationIdCount\");\r",
+							"    if(epApplicationIdCount < epApplicationIds.length){\r",
+							"        console.log(\"count\", epApplicationIdCount, epApplicationIds.length);\r",
+							"        epApplicationIdCount++;\r",
+							"        pm.variables.set(\"epApplicationIdCount\", epApplicationIdCount);\r",
+							"        postman.setNextRequest(\"Deletes an application object instance\");\r",
+							"    }else{\r",
+							"        postman.setNextRequest(\"Get all applications\");\r",
+							"    }\r",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/v2/architecture/applications/:id",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"v2",
+						"architecture",
+						"applications",
+						":id"
+					],
+					"variable": [
+						{
+							"key": "id",
+							"value": "{{epApplicationId}}",
+							"description": "(Required) The ID of the application"
+						}
+					]
+				},
+				"description": "Use this API to delete an application."
+			},
+			"response": [
+				{
+					"name": "No content is returned.",
+					"originalRequest": {
+						"method": "DELETE",
+						"header": [
+							{
+								"description": "Added as a part of security scheme: bearer",
+								"key": "Authorization",
+								"value": "Bearer <token>"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v2/architecture/applications/:id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v2",
+								"architecture",
+								"applications",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "reprehenderit aliquip exercitation",
+									"description": "(Required) The ID of the application"
+								}
+							]
+						}
+					},
+					"status": "No Content",
+					"code": 204,
+					"_postman_previewlanguage": "text",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "text/plain"
+						}
+					],
+					"cookie": [],
+					"body": ""
+				},
+				{
+					"name": "Bad Request.",
+					"originalRequest": {
+						"method": "DELETE",
+						"header": [
+							{
+								"description": "Added as a part of security scheme: bearer",
+								"key": "Authorization",
+								"value": "Bearer <token>"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v2/architecture/applications/:id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v2",
+								"architecture",
+								"applications",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "reprehenderit aliquip exercitation",
+									"description": "(Required) The ID of the application"
+								}
+							]
+						}
+					},
+					"status": "Bad Request",
+					"code": 400,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"message\": \"An error occurred\",\n  \"errorId\": \"123e4567-e89b-12d3-a456-426655440000\",\n  \"meta\": {\n    \"enim_f4\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  },\n  \"validationDetails\": {\n    \"aliqua_5e5\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  }\n}"
+				},
+				{
+					"name": "Unauthorized.",
+					"originalRequest": {
+						"method": "DELETE",
+						"header": [
+							{
+								"description": "Added as a part of security scheme: bearer",
+								"key": "Authorization",
+								"value": "Bearer <token>"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v2/architecture/applications/:id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v2",
+								"architecture",
+								"applications",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "reprehenderit aliquip exercitation",
+									"description": "(Required) The ID of the application"
+								}
+							]
+						}
+					},
+					"status": "Unauthorized",
+					"code": 401,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"message\": \"An error occurred\",\n  \"errorId\": \"123e4567-e89b-12d3-a456-426655440000\",\n  \"meta\": {\n    \"enim_f4\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  },\n  \"validationDetails\": {\n    \"aliqua_5e5\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  }\n}"
+				},
+				{
+					"name": "Forbidden.",
+					"originalRequest": {
+						"method": "DELETE",
+						"header": [
+							{
+								"description": "Added as a part of security scheme: bearer",
+								"key": "Authorization",
+								"value": "Bearer <token>"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v2/architecture/applications/:id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v2",
+								"architecture",
+								"applications",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "reprehenderit aliquip exercitation",
+									"description": "(Required) The ID of the application"
+								}
+							]
+						}
+					},
+					"status": "Forbidden",
+					"code": 403,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"message\": \"An error occurred\",\n  \"errorId\": \"123e4567-e89b-12d3-a456-426655440000\",\n  \"meta\": {\n    \"enim_f4\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  },\n  \"validationDetails\": {\n    \"aliqua_5e5\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  }\n}"
+				},
+				{
+					"name": "Not Found.",
+					"originalRequest": {
+						"method": "DELETE",
+						"header": [
+							{
+								"description": "Added as a part of security scheme: bearer",
+								"key": "Authorization",
+								"value": "Bearer <token>"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v2/architecture/applications/:id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v2",
+								"architecture",
+								"applications",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "reprehenderit aliquip exercitation",
+									"description": "(Required) The ID of the application"
+								}
+							]
+						}
+					},
+					"status": "Not Found",
+					"code": 404,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"message\": \"An error occurred\",\n  \"errorId\": \"123e4567-e89b-12d3-a456-426655440000\",\n  \"meta\": {\n    \"enim_f4\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  },\n  \"validationDetails\": {\n    \"aliqua_5e5\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  }\n}"
+				},
+				{
+					"name": "Method Not Allowed",
+					"originalRequest": {
+						"method": "DELETE",
+						"header": [
+							{
+								"description": "Added as a part of security scheme: bearer",
+								"key": "Authorization",
+								"value": "Bearer <token>"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v2/architecture/applications/:id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v2",
+								"architecture",
+								"applications",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "reprehenderit aliquip exercitation",
+									"description": "(Required) The ID of the application"
+								}
+							]
+						}
+					},
+					"status": "Method Not Allowed",
+					"code": 405,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"message\": \"An error occurred\",\n  \"errorId\": \"123e4567-e89b-12d3-a456-426655440000\",\n  \"meta\": {\n    \"enim_f4\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  },\n  \"validationDetails\": {\n    \"aliqua_5e5\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  }\n}"
+				},
+				{
+					"name": "Internal Server Error.",
+					"originalRequest": {
+						"method": "DELETE",
+						"header": [
+							{
+								"description": "Added as a part of security scheme: bearer",
+								"key": "Authorization",
+								"value": "Bearer <token>"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v2/architecture/applications/:id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v2",
+								"architecture",
+								"applications",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "reprehenderit aliquip exercitation",
+									"description": "(Required) The ID of the application"
+								}
+							]
+						}
+					},
+					"status": "Internal Server Error",
+					"code": 500,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"message\": \"An error occurred\",\n  \"errorId\": \"123e4567-e89b-12d3-a456-426655440000\",\n  \"meta\": {\n    \"enim_f4\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  },\n  \"validationDetails\": {\n    \"aliqua_5e5\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  }\n}"
+				},
+				{
+					"name": "Not Implemented",
+					"originalRequest": {
+						"method": "DELETE",
+						"header": [
+							{
+								"description": "Added as a part of security scheme: bearer",
+								"key": "Authorization",
+								"value": "Bearer <token>"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v2/architecture/applications/:id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v2",
+								"architecture",
+								"applications",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "reprehenderit aliquip exercitation",
+									"description": "(Required) The ID of the application"
+								}
+							]
+						}
+					},
+					"status": "Not Implemented",
+					"code": 501,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"message\": \"An error occurred\",\n  \"errorId\": \"123e4567-e89b-12d3-a456-426655440000\",\n  \"meta\": {\n    \"enim_f4\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  },\n  \"validationDetails\": {\n    \"aliqua_5e5\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  }\n}"
+				},
+				{
+					"name": "Service Unavailable.",
+					"originalRequest": {
+						"method": "DELETE",
+						"header": [
+							{
+								"description": "Added as a part of security scheme: bearer",
+								"key": "Authorization",
+								"value": "Bearer <token>"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v2/architecture/applications/:id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v2",
+								"architecture",
+								"applications",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "reprehenderit aliquip exercitation",
+									"description": "(Required) The ID of the application"
+								}
+							]
+						}
+					},
+					"status": "Service Unavailable",
+					"code": 503,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"message\": \"An error occurred\",\n  \"errorId\": \"123e4567-e89b-12d3-a456-426655440000\",\n  \"meta\": {\n    \"enim_f4\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  },\n  \"validationDetails\": {\n    \"aliqua_5e5\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  }\n}"
+				},
+				{
+					"name": "Gateway Timeout.",
+					"originalRequest": {
+						"method": "DELETE",
+						"header": [
+							{
+								"description": "Added as a part of security scheme: bearer",
+								"key": "Authorization",
+								"value": "Bearer <token>"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v2/architecture/applications/:id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v2",
+								"architecture",
+								"applications",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "reprehenderit aliquip exercitation",
+									"description": "(Required) The ID of the application"
+								}
+							]
+						}
+					},
+					"status": "Gateway Timeout",
+					"code": 504,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"message\": \"An error occurred\",\n  \"errorId\": \"123e4567-e89b-12d3-a456-426655440000\",\n  \"meta\": {\n    \"enim_f4\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  },\n  \"validationDetails\": {\n    \"aliqua_5e5\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  }\n}"
+				}
+			]
+		},
+		{
+			"name": "Get all application domain objects",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var response = JSON.parse(responseBody);\r",
+							"\r",
+							"var epApplicationDomainIds = [];\r",
+							"\r",
+							"for(var i=0; i < response.data.length; i++){\r",
+							"        epApplicationDomainIds.push(response.data[i].id);\r",
+							"}\r",
+							"pm.variables.set(\"epApplicationDomainIds\", epApplicationDomainIds);\r",
+							"console.log(\"ep ApplicationDomain ids\", epApplicationDomainIds, epApplicationDomainIds.length)\r",
+							"if(epApplicationDomainIds.length == 0  ){\r",
+							"    postman.setNextRequest(null);\r",
+							"}\r",
+							"pm.variables.set(\"epApplicationDomainIds\", epApplicationDomainIds);\r",
+							"pm.variables.set(\"epApplicationDomainIdCount\", 0);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json;charset=UTF-8"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/v2/architecture/applicationDomains?pageSize=100",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"v2",
+						"architecture",
+						"applicationDomains"
+					],
+					"query": [
+						{
+							"key": "pageSize",
+							"value": "100",
+							"description": "The number of application domains to get per page."
+						},
+						{
+							"key": "pageNumber",
+							"value": "1",
+							"description": "The page number to get.",
+							"disabled": true
+						},
+						{
+							"key": "name",
+							"value": "reprehenderit aliquip exercitation",
+							"description": "Name to be used to match the application domain.",
+							"disabled": true
+						},
+						{
+							"key": "ids",
+							"value": "dolore sunt irure",
+							"description": "Match only application domains with the given IDs separated by commas.",
+							"disabled": true
+						},
+						{
+							"key": "ids",
+							"value": "quis",
+							"description": "Match only application domains with the given IDs separated by commas.",
+							"disabled": true
+						},
+						{
+							"key": "include",
+							"value": "dolore sunt irure",
+							"description": "Specify extra data to be included, options are: stats",
+							"disabled": true
+						},
+						{
+							"key": "include",
+							"value": "quis",
+							"description": "Specify extra data to be included, options are: stats",
+							"disabled": true
+						}
+					]
+				},
+				"description": "Use this API to retrieve a list of application domains that match the given parameters."
+			},
+			"response": [
+				{
+					"name": "Retrieve a list of application domains and the accompanying metadata.",
+					"originalRequest": {
+						"method": "GET",
+						"header": [
+							{
+								"description": "Added as a part of security scheme: bearer",
+								"key": "Authorization",
+								"value": "Bearer <token>"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v2/architecture/applicationDomains?pageSize=20&pageNumber=1&name=reprehenderit aliquip exercitation&ids=velit irure eiusmod dolore&ids=culpa&include=velit irure eiusmod dolore&include=culpa",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v2",
+								"architecture",
+								"applicationDomains"
+							],
+							"query": [
+								{
+									"key": "pageSize",
+									"value": "20"
+								},
+								{
+									"key": "pageNumber",
+									"value": "1"
+								},
+								{
+									"key": "name",
+									"value": "reprehenderit aliquip exercitation"
+								},
+								{
+									"key": "ids",
+									"value": "velit irure eiusmod dolore"
+								},
+								{
+									"key": "ids",
+									"value": "culpa"
+								},
+								{
+									"key": "include",
+									"value": "velit irure eiusmod dolore"
+								},
+								{
+									"key": "include",
+									"value": "culpa"
+								}
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json;charset=UTF-8"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"data\": [\n    {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    },\n    {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  ],\n  \"meta\": {\n    \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n  }\n}"
+				},
+				{
+					"name": "Bad Request.",
+					"originalRequest": {
+						"method": "GET",
+						"header": [
+							{
+								"description": "Added as a part of security scheme: bearer",
+								"key": "Authorization",
+								"value": "Bearer <token>"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v2/architecture/applicationDomains?pageSize=20&pageNumber=1&name=reprehenderit aliquip exercitation&ids=velit irure eiusmod dolore&ids=culpa&include=velit irure eiusmod dolore&include=culpa",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v2",
+								"architecture",
+								"applicationDomains"
+							],
+							"query": [
+								{
+									"key": "pageSize",
+									"value": "20"
+								},
+								{
+									"key": "pageNumber",
+									"value": "1"
+								},
+								{
+									"key": "name",
+									"value": "reprehenderit aliquip exercitation"
+								},
+								{
+									"key": "ids",
+									"value": "velit irure eiusmod dolore"
+								},
+								{
+									"key": "ids",
+									"value": "culpa"
+								},
+								{
+									"key": "include",
+									"value": "velit irure eiusmod dolore"
+								},
+								{
+									"key": "include",
+									"value": "culpa"
+								}
+							]
+						}
+					},
+					"status": "Bad Request",
+					"code": 400,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"message\": \"An error occurred\",\n  \"errorId\": \"123e4567-e89b-12d3-a456-426655440000\",\n  \"meta\": {\n    \"enim_f4\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  },\n  \"validationDetails\": {\n    \"aliqua_5e5\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  }\n}"
+				},
+				{
+					"name": "Unauthorized.",
+					"originalRequest": {
+						"method": "GET",
+						"header": [
+							{
+								"description": "Added as a part of security scheme: bearer",
+								"key": "Authorization",
+								"value": "Bearer <token>"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v2/architecture/applicationDomains?pageSize=20&pageNumber=1&name=reprehenderit aliquip exercitation&ids=velit irure eiusmod dolore&ids=culpa&include=velit irure eiusmod dolore&include=culpa",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v2",
+								"architecture",
+								"applicationDomains"
+							],
+							"query": [
+								{
+									"key": "pageSize",
+									"value": "20"
+								},
+								{
+									"key": "pageNumber",
+									"value": "1"
+								},
+								{
+									"key": "name",
+									"value": "reprehenderit aliquip exercitation"
+								},
+								{
+									"key": "ids",
+									"value": "velit irure eiusmod dolore"
+								},
+								{
+									"key": "ids",
+									"value": "culpa"
+								},
+								{
+									"key": "include",
+									"value": "velit irure eiusmod dolore"
+								},
+								{
+									"key": "include",
+									"value": "culpa"
+								}
+							]
+						}
+					},
+					"status": "Unauthorized",
+					"code": 401,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"message\": \"An error occurred\",\n  \"errorId\": \"123e4567-e89b-12d3-a456-426655440000\",\n  \"meta\": {\n    \"enim_f4\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  },\n  \"validationDetails\": {\n    \"aliqua_5e5\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  }\n}"
+				},
+				{
+					"name": "Forbidden.",
+					"originalRequest": {
+						"method": "GET",
+						"header": [
+							{
+								"description": "Added as a part of security scheme: bearer",
+								"key": "Authorization",
+								"value": "Bearer <token>"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v2/architecture/applicationDomains?pageSize=20&pageNumber=1&name=reprehenderit aliquip exercitation&ids=velit irure eiusmod dolore&ids=culpa&include=velit irure eiusmod dolore&include=culpa",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v2",
+								"architecture",
+								"applicationDomains"
+							],
+							"query": [
+								{
+									"key": "pageSize",
+									"value": "20"
+								},
+								{
+									"key": "pageNumber",
+									"value": "1"
+								},
+								{
+									"key": "name",
+									"value": "reprehenderit aliquip exercitation"
+								},
+								{
+									"key": "ids",
+									"value": "velit irure eiusmod dolore"
+								},
+								{
+									"key": "ids",
+									"value": "culpa"
+								},
+								{
+									"key": "include",
+									"value": "velit irure eiusmod dolore"
+								},
+								{
+									"key": "include",
+									"value": "culpa"
+								}
+							]
+						}
+					},
+					"status": "Forbidden",
+					"code": 403,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"message\": \"An error occurred\",\n  \"errorId\": \"123e4567-e89b-12d3-a456-426655440000\",\n  \"meta\": {\n    \"enim_f4\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  },\n  \"validationDetails\": {\n    \"aliqua_5e5\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  }\n}"
+				},
+				{
+					"name": "Not Found.",
+					"originalRequest": {
+						"method": "GET",
+						"header": [
+							{
+								"description": "Added as a part of security scheme: bearer",
+								"key": "Authorization",
+								"value": "Bearer <token>"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v2/architecture/applicationDomains?pageSize=20&pageNumber=1&name=reprehenderit aliquip exercitation&ids=velit irure eiusmod dolore&ids=culpa&include=velit irure eiusmod dolore&include=culpa",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v2",
+								"architecture",
+								"applicationDomains"
+							],
+							"query": [
+								{
+									"key": "pageSize",
+									"value": "20"
+								},
+								{
+									"key": "pageNumber",
+									"value": "1"
+								},
+								{
+									"key": "name",
+									"value": "reprehenderit aliquip exercitation"
+								},
+								{
+									"key": "ids",
+									"value": "velit irure eiusmod dolore"
+								},
+								{
+									"key": "ids",
+									"value": "culpa"
+								},
+								{
+									"key": "include",
+									"value": "velit irure eiusmod dolore"
+								},
+								{
+									"key": "include",
+									"value": "culpa"
+								}
+							]
+						}
+					},
+					"status": "Not Found",
+					"code": 404,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"message\": \"An error occurred\",\n  \"errorId\": \"123e4567-e89b-12d3-a456-426655440000\",\n  \"meta\": {\n    \"enim_f4\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  },\n  \"validationDetails\": {\n    \"aliqua_5e5\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  }\n}"
+				},
+				{
+					"name": "Method Not Allowed",
+					"originalRequest": {
+						"method": "GET",
+						"header": [
+							{
+								"description": "Added as a part of security scheme: bearer",
+								"key": "Authorization",
+								"value": "Bearer <token>"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v2/architecture/applicationDomains?pageSize=20&pageNumber=1&name=reprehenderit aliquip exercitation&ids=velit irure eiusmod dolore&ids=culpa&include=velit irure eiusmod dolore&include=culpa",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v2",
+								"architecture",
+								"applicationDomains"
+							],
+							"query": [
+								{
+									"key": "pageSize",
+									"value": "20"
+								},
+								{
+									"key": "pageNumber",
+									"value": "1"
+								},
+								{
+									"key": "name",
+									"value": "reprehenderit aliquip exercitation"
+								},
+								{
+									"key": "ids",
+									"value": "velit irure eiusmod dolore"
+								},
+								{
+									"key": "ids",
+									"value": "culpa"
+								},
+								{
+									"key": "include",
+									"value": "velit irure eiusmod dolore"
+								},
+								{
+									"key": "include",
+									"value": "culpa"
+								}
+							]
+						}
+					},
+					"status": "Method Not Allowed",
+					"code": 405,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"message\": \"An error occurred\",\n  \"errorId\": \"123e4567-e89b-12d3-a456-426655440000\",\n  \"meta\": {\n    \"enim_f4\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  },\n  \"validationDetails\": {\n    \"aliqua_5e5\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  }\n}"
+				},
+				{
+					"name": "Internal Server Error.",
+					"originalRequest": {
+						"method": "GET",
+						"header": [
+							{
+								"description": "Added as a part of security scheme: bearer",
+								"key": "Authorization",
+								"value": "Bearer <token>"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v2/architecture/applicationDomains?pageSize=20&pageNumber=1&name=reprehenderit aliquip exercitation&ids=velit irure eiusmod dolore&ids=culpa&include=velit irure eiusmod dolore&include=culpa",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v2",
+								"architecture",
+								"applicationDomains"
+							],
+							"query": [
+								{
+									"key": "pageSize",
+									"value": "20"
+								},
+								{
+									"key": "pageNumber",
+									"value": "1"
+								},
+								{
+									"key": "name",
+									"value": "reprehenderit aliquip exercitation"
+								},
+								{
+									"key": "ids",
+									"value": "velit irure eiusmod dolore"
+								},
+								{
+									"key": "ids",
+									"value": "culpa"
+								},
+								{
+									"key": "include",
+									"value": "velit irure eiusmod dolore"
+								},
+								{
+									"key": "include",
+									"value": "culpa"
+								}
+							]
+						}
+					},
+					"status": "Internal Server Error",
+					"code": 500,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"message\": \"An error occurred\",\n  \"errorId\": \"123e4567-e89b-12d3-a456-426655440000\",\n  \"meta\": {\n    \"enim_f4\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  },\n  \"validationDetails\": {\n    \"aliqua_5e5\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  }\n}"
+				},
+				{
+					"name": "Not Implemented",
+					"originalRequest": {
+						"method": "GET",
+						"header": [
+							{
+								"description": "Added as a part of security scheme: bearer",
+								"key": "Authorization",
+								"value": "Bearer <token>"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v2/architecture/applicationDomains?pageSize=20&pageNumber=1&name=reprehenderit aliquip exercitation&ids=velit irure eiusmod dolore&ids=culpa&include=velit irure eiusmod dolore&include=culpa",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v2",
+								"architecture",
+								"applicationDomains"
+							],
+							"query": [
+								{
+									"key": "pageSize",
+									"value": "20"
+								},
+								{
+									"key": "pageNumber",
+									"value": "1"
+								},
+								{
+									"key": "name",
+									"value": "reprehenderit aliquip exercitation"
+								},
+								{
+									"key": "ids",
+									"value": "velit irure eiusmod dolore"
+								},
+								{
+									"key": "ids",
+									"value": "culpa"
+								},
+								{
+									"key": "include",
+									"value": "velit irure eiusmod dolore"
+								},
+								{
+									"key": "include",
+									"value": "culpa"
+								}
+							]
+						}
+					},
+					"status": "Not Implemented",
+					"code": 501,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"message\": \"An error occurred\",\n  \"errorId\": \"123e4567-e89b-12d3-a456-426655440000\",\n  \"meta\": {\n    \"enim_f4\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  },\n  \"validationDetails\": {\n    \"aliqua_5e5\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  }\n}"
+				},
+				{
+					"name": "Service Unavailable.",
+					"originalRequest": {
+						"method": "GET",
+						"header": [
+							{
+								"description": "Added as a part of security scheme: bearer",
+								"key": "Authorization",
+								"value": "Bearer <token>"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v2/architecture/applicationDomains?pageSize=20&pageNumber=1&name=reprehenderit aliquip exercitation&ids=velit irure eiusmod dolore&ids=culpa&include=velit irure eiusmod dolore&include=culpa",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v2",
+								"architecture",
+								"applicationDomains"
+							],
+							"query": [
+								{
+									"key": "pageSize",
+									"value": "20"
+								},
+								{
+									"key": "pageNumber",
+									"value": "1"
+								},
+								{
+									"key": "name",
+									"value": "reprehenderit aliquip exercitation"
+								},
+								{
+									"key": "ids",
+									"value": "velit irure eiusmod dolore"
+								},
+								{
+									"key": "ids",
+									"value": "culpa"
+								},
+								{
+									"key": "include",
+									"value": "velit irure eiusmod dolore"
+								},
+								{
+									"key": "include",
+									"value": "culpa"
+								}
+							]
+						}
+					},
+					"status": "Service Unavailable",
+					"code": 503,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"message\": \"An error occurred\",\n  \"errorId\": \"123e4567-e89b-12d3-a456-426655440000\",\n  \"meta\": {\n    \"enim_f4\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  },\n  \"validationDetails\": {\n    \"aliqua_5e5\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  }\n}"
+				},
+				{
+					"name": "Gateway Timeout.",
+					"originalRequest": {
+						"method": "GET",
+						"header": [
+							{
+								"description": "Added as a part of security scheme: bearer",
+								"key": "Authorization",
+								"value": "Bearer <token>"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v2/architecture/applicationDomains?pageSize=20&pageNumber=1&name=reprehenderit aliquip exercitation&ids=velit irure eiusmod dolore&ids=culpa&include=velit irure eiusmod dolore&include=culpa",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v2",
+								"architecture",
+								"applicationDomains"
+							],
+							"query": [
+								{
+									"key": "pageSize",
+									"value": "20"
+								},
+								{
+									"key": "pageNumber",
+									"value": "1"
+								},
+								{
+									"key": "name",
+									"value": "reprehenderit aliquip exercitation"
+								},
+								{
+									"key": "ids",
+									"value": "velit irure eiusmod dolore"
+								},
+								{
+									"key": "ids",
+									"value": "culpa"
+								},
+								{
+									"key": "include",
+									"value": "velit irure eiusmod dolore"
+								},
+								{
+									"key": "include",
+									"value": "culpa"
+								}
+							]
+						}
+					},
+					"status": "Gateway Timeout",
+					"code": 504,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"message\": \"An error occurred\",\n  \"errorId\": \"123e4567-e89b-12d3-a456-426655440000\",\n  \"meta\": {\n    \"enim_f4\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  },\n  \"validationDetails\": {\n    \"aliqua_5e5\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  }\n}"
+				}
+			]
+		},
+		{
+			"name": "Deletes an application domain object",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"if(pm.variables.has(\"epApplicationDomainIds\")){\r",
+							"    var epApplicationDomainIds = pm.variables.get(\"epApplicationDomainIds\");\r",
+							"    var epApplicationDomainIdCount = pm.variables.get(\"epApplicationDomainIdCount\");\r",
+							"\r",
+							"    console.log(\"epApplicationDomainIds\",epApplicationDomainIds );\r",
+							"    console.log(\"epApplicationDomainIdCount\",epApplicationDomainIdCount );\r",
+							"    console.log(\"current ApplicationDomain id\", epApplicationDomainIds[epApplicationDomainIdCount] );\r",
+							"    pm.collectionVariables.set(\"epApplicationDomainId\", epApplicationDomainIds[epApplicationDomainIdCount]);\r",
+							"}\r",
+							"\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"//figure out whether to loop again\r",
+							"if(pm.variables.has(\"epApplicationDomainIds\")){\r",
+							"    epApplicationDomainIds = pm.variables.get(\"epApplicationDomainIds\");\r",
+							"    epApplicationDomainIdCount = pm.variables.get(\"epApplicationDomainIdCount\");\r",
+							"    if(epApplicationDomainIdCount < epApplicationDomainIds.length){\r",
+							"        console.log(\"count\", epApplicationDomainIdCount, epApplicationDomainIds.length);\r",
+							"        epApplicationDomainIdCount++;\r",
+							"        pm.variables.set(\"epApplicationDomainIdCount\", epApplicationDomainIdCount);\r",
+							"        postman.setNextRequest(\"Deletes an application domain object\");\r",
+							"    }else{\r",
+							"        postman.setNextRequest(\"Get all application domain objects\");\r",
+							"    }\r",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/v2/architecture/applicationDomains/:id",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"v2",
+						"architecture",
+						"applicationDomains",
+						":id"
+					],
+					"variable": [
+						{
+							"key": "id",
+							"value": "{{epApplicationDomainId}}",
+							"description": "(Required) The ID of the application domain object."
+						}
+					]
+				},
+				"description": "Use this API to delete an application domain. This action also deletes all applications, events, and schemas in the application domain. You cannot undo this operation."
+			},
+			"response": [
+				{
+					"name": "No content is returned.",
+					"originalRequest": {
+						"method": "DELETE",
+						"header": [
+							{
+								"description": "Added as a part of security scheme: bearer",
+								"key": "Authorization",
+								"value": "Bearer <token>"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v2/architecture/applicationDomains/:id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v2",
+								"architecture",
+								"applicationDomains",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "reprehenderit aliquip exercitation",
+									"description": "(Required) The ID of the application domain object."
+								}
+							]
+						}
+					},
+					"status": "No Content",
+					"code": 204,
+					"_postman_previewlanguage": "text",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "text/plain"
+						}
+					],
+					"cookie": [],
+					"body": ""
+				},
+				{
+					"name": "Bad Request.",
+					"originalRequest": {
+						"method": "DELETE",
+						"header": [
+							{
+								"description": "Added as a part of security scheme: bearer",
+								"key": "Authorization",
+								"value": "Bearer <token>"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v2/architecture/applicationDomains/:id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v2",
+								"architecture",
+								"applicationDomains",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "reprehenderit aliquip exercitation",
+									"description": "(Required) The ID of the application domain object."
+								}
+							]
+						}
+					},
+					"status": "Bad Request",
+					"code": 400,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"message\": \"An error occurred\",\n  \"errorId\": \"123e4567-e89b-12d3-a456-426655440000\",\n  \"meta\": {\n    \"enim_f4\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  },\n  \"validationDetails\": {\n    \"aliqua_5e5\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  }\n}"
+				},
+				{
+					"name": "Unauthorized.",
+					"originalRequest": {
+						"method": "DELETE",
+						"header": [
+							{
+								"description": "Added as a part of security scheme: bearer",
+								"key": "Authorization",
+								"value": "Bearer <token>"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v2/architecture/applicationDomains/:id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v2",
+								"architecture",
+								"applicationDomains",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "reprehenderit aliquip exercitation",
+									"description": "(Required) The ID of the application domain object."
+								}
+							]
+						}
+					},
+					"status": "Unauthorized",
+					"code": 401,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"message\": \"An error occurred\",\n  \"errorId\": \"123e4567-e89b-12d3-a456-426655440000\",\n  \"meta\": {\n    \"enim_f4\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  },\n  \"validationDetails\": {\n    \"aliqua_5e5\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  }\n}"
+				},
+				{
+					"name": "Forbidden.",
+					"originalRequest": {
+						"method": "DELETE",
+						"header": [
+							{
+								"description": "Added as a part of security scheme: bearer",
+								"key": "Authorization",
+								"value": "Bearer <token>"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v2/architecture/applicationDomains/:id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v2",
+								"architecture",
+								"applicationDomains",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "reprehenderit aliquip exercitation",
+									"description": "(Required) The ID of the application domain object."
+								}
+							]
+						}
+					},
+					"status": "Forbidden",
+					"code": 403,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"message\": \"An error occurred\",\n  \"errorId\": \"123e4567-e89b-12d3-a456-426655440000\",\n  \"meta\": {\n    \"enim_f4\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  },\n  \"validationDetails\": {\n    \"aliqua_5e5\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  }\n}"
+				},
+				{
+					"name": "Not Found.",
+					"originalRequest": {
+						"method": "DELETE",
+						"header": [
+							{
+								"description": "Added as a part of security scheme: bearer",
+								"key": "Authorization",
+								"value": "Bearer <token>"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v2/architecture/applicationDomains/:id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v2",
+								"architecture",
+								"applicationDomains",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "reprehenderit aliquip exercitation",
+									"description": "(Required) The ID of the application domain object."
+								}
+							]
+						}
+					},
+					"status": "Not Found",
+					"code": 404,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"message\": \"An error occurred\",\n  \"errorId\": \"123e4567-e89b-12d3-a456-426655440000\",\n  \"meta\": {\n    \"enim_f4\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  },\n  \"validationDetails\": {\n    \"aliqua_5e5\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  }\n}"
+				},
+				{
+					"name": "Method Not Allowed",
+					"originalRequest": {
+						"method": "DELETE",
+						"header": [
+							{
+								"description": "Added as a part of security scheme: bearer",
+								"key": "Authorization",
+								"value": "Bearer <token>"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v2/architecture/applicationDomains/:id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v2",
+								"architecture",
+								"applicationDomains",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "reprehenderit aliquip exercitation",
+									"description": "(Required) The ID of the application domain object."
+								}
+							]
+						}
+					},
+					"status": "Method Not Allowed",
+					"code": 405,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"message\": \"An error occurred\",\n  \"errorId\": \"123e4567-e89b-12d3-a456-426655440000\",\n  \"meta\": {\n    \"enim_f4\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  },\n  \"validationDetails\": {\n    \"aliqua_5e5\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  }\n}"
+				},
+				{
+					"name": "Internal Server Error.",
+					"originalRequest": {
+						"method": "DELETE",
+						"header": [
+							{
+								"description": "Added as a part of security scheme: bearer",
+								"key": "Authorization",
+								"value": "Bearer <token>"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v2/architecture/applicationDomains/:id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v2",
+								"architecture",
+								"applicationDomains",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "reprehenderit aliquip exercitation",
+									"description": "(Required) The ID of the application domain object."
+								}
+							]
+						}
+					},
+					"status": "Internal Server Error",
+					"code": 500,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"message\": \"An error occurred\",\n  \"errorId\": \"123e4567-e89b-12d3-a456-426655440000\",\n  \"meta\": {\n    \"enim_f4\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  },\n  \"validationDetails\": {\n    \"aliqua_5e5\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  }\n}"
+				},
+				{
+					"name": "Not Implemented",
+					"originalRequest": {
+						"method": "DELETE",
+						"header": [
+							{
+								"description": "Added as a part of security scheme: bearer",
+								"key": "Authorization",
+								"value": "Bearer <token>"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v2/architecture/applicationDomains/:id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v2",
+								"architecture",
+								"applicationDomains",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "reprehenderit aliquip exercitation",
+									"description": "(Required) The ID of the application domain object."
+								}
+							]
+						}
+					},
+					"status": "Not Implemented",
+					"code": 501,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"message\": \"An error occurred\",\n  \"errorId\": \"123e4567-e89b-12d3-a456-426655440000\",\n  \"meta\": {\n    \"enim_f4\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  },\n  \"validationDetails\": {\n    \"aliqua_5e5\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  }\n}"
+				},
+				{
+					"name": "Service Unavailable.",
+					"originalRequest": {
+						"method": "DELETE",
+						"header": [
+							{
+								"description": "Added as a part of security scheme: bearer",
+								"key": "Authorization",
+								"value": "Bearer <token>"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v2/architecture/applicationDomains/:id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v2",
+								"architecture",
+								"applicationDomains",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "reprehenderit aliquip exercitation",
+									"description": "(Required) The ID of the application domain object."
+								}
+							]
+						}
+					},
+					"status": "Service Unavailable",
+					"code": 503,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"message\": \"An error occurred\",\n  \"errorId\": \"123e4567-e89b-12d3-a456-426655440000\",\n  \"meta\": {\n    \"enim_f4\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  },\n  \"validationDetails\": {\n    \"aliqua_5e5\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  }\n}"
+				},
+				{
+					"name": "Gateway Timeout.",
+					"originalRequest": {
+						"method": "DELETE",
+						"header": [
+							{
+								"description": "Added as a part of security scheme: bearer",
+								"key": "Authorization",
+								"value": "Bearer <token>"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v2/architecture/applicationDomains/:id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v2",
+								"architecture",
+								"applicationDomains",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "reprehenderit aliquip exercitation",
+									"description": "(Required) The ID of the application domain object."
+								}
+							]
+						}
+					},
+					"status": "Gateway Timeout",
+					"code": 504,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"message\": \"An error occurred\",\n  \"errorId\": \"123e4567-e89b-12d3-a456-426655440000\",\n  \"meta\": {\n    \"enim_f4\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  },\n  \"validationDetails\": {\n    \"aliqua_5e5\": {\n      \"value\": \"<Error: Too many levels of nesting to fake this schema>\"\n    }\n  }\n}"
+				}
+			]
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{api_key}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "epEnvironmentId",
+			"value": ""
+		},
+		{
+			"key": "epApplicationId",
+			"value": ""
+		},
+		{
+			"key": "epApplicationDomainId",
+			"value": ""
+		},
+		{
+			"key": "epStudentId",
+			"value": "",
+			"type": "string"
+		}
+	]
+}

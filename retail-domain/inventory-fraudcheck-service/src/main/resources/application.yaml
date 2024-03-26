@@ -1,0 +1,10 @@
+spring:
+  main:
+    web-application-type: none
+
+solace:
+  reconnectionAttempts: "5"
+  connectionRetriesPerHost: "5"
+  stockReservationTopicString: "acmeretail/onlineservices/stockreservation/created/v1/{orderId}/{productId}/{reservationId}"
+  orderConfirmedEventTopicString: "acmeretail/onlineservices/order/confirmed/v2/{regionId}/{orderId}"
+  orderCreatedQueueName: "all-orders-placed"

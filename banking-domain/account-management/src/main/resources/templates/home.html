@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Acme Bank - Account Management</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+<header class="header">
+    <img alt="Solace logo" src="/images/solace-logo.png"/>
+    <h1>Acme Bank - Account Management<span class="subscript">Powered by Solace</span></h1>
+    <img alt="Bank logo" class="banklogo" src="/images/bank-logo.png"/>
+</header>
+
+<div class="container mt-5">
+    <form action="#" class="row g-3" method="post" th:action="@{/connectToBroker}"
+          th:object="${solaceConnectionParameters}">
+        <div class="col-md-3 mb-3">
+            <input class="form-control" id="hostUrl" name="hostUrl" placeholder="Host URL" th:field="*{hostUrl}"
+                   type="text">
+            <span th:errors="*{hostUrl}"></span>
+        </div>
+        <div class="col-md-3 mb-3">
+            <input class="form-control" id="vpnName" name="vpnName" placeholder="VPN Name" th:field="*{vpnName}"
+                   type="text">
+            <span th:errors="*{vpnName}"></span>
+        </div>
+        <div class="col-md-3 mb-3">
+            <input class="form-control" id="userName" name="userName" placeholder="Username" th:field="*{userName}"
+                   type="text">
+            <span th:errors="*{userName}"></span>
+        </div>
+        <div class="col-md-3 mb-3">
+            <input class="form-control" id="password" name="password" placeholder="Password" th:field="*{password}"
+                   type="text">
+            <span th:errors="*{password}"></span>
+        </div>
+        <div class="col-md-3 offset-md-3">
+            <button class="btn btn-primary" type="submit">Connect to broker</button>
+        </div>
+    </form>
+</div>
+<div class="container mt-5 alert alert-success mt-4" th:if="${brokerConnected == true }">
+    <strong>Success!</strong> Broker connected successfully
+</div>
+<div class="container mt-5 alert alert-danger mt-4" th:if="${brokerConnected == false}">
+    <strong>Error!</strong> Broker connection failed
+</div>
+
+
+<div class="container mt-3" th:if="${brokerConnected == true}">
+
+    <div>
+        <h4> New Acme Bank account application</h4>
+        <form action="#" class="row g-3" method="post" th:action="@{/applyNewAccount}">
+            <div class="col-md-3 offset-md-3">
+                <button class="btn btn-primary" type="submit">Apply for a new Acme bank account</button>
+            </div>
+        </form>
+    </div>
+
+    <div th:if="${brokerConnected == true && accountsList != null}">
+        <h4>Account Details</h4>
+        <table id="accountTable">
+            <thead>
+            <tr>
+                <th>Account Number</th>
+                <th>Account Status</th>
+                <th>Backoffice comments</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="account : ${accountsList}">
+                <td th:text="${account.value.accountNumber}">Account Number</td>
+                <td th:text="${account.value.currentStatus}">${account.value.currentStatus}</td>
+                <td th:text="${account.value.comment}">${account.value.comment}</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+<script th:inline="javascript">
+    function updateAccountsList() {
+        $.ajax({
+            url: '/updateAccountsList',
+            type: 'GET',
+            success: function (accounts) {
+                $('#accountTable tbody').empty();
+                $.each(accounts, function (index, account) {
+                    $('#accountTable tbody').append(
+                        '<tr>' +
+                        '<td>' + account.accountNumber + '</td>' +
+                        '<td>' + account.currentStatus + '</td>' +
+                        '<td>' + account.comment + '</td>' +
+                        '</tr>'
+                    );
+                });
+            },
+            error: function (xhr, status, error) {
+                console.error('Failed to retrieve accounts: ' + error);
+            }
+        });
+    }
+
+    $(document).ready(function () {
+        setInterval(updateAccountsList, 15000); // Update every 15 seconds
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Acme Retail - Order Management</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+    <link href="/css/styles.css" rel="stylesheet">
+</head>
+<body>
+<header class="header">
+    <img alt="Solace logo" src="/images/solace-logo.png"/>
+    <h1 class="shop-title">Acme Shop - Online Shopping <span class="subscript">Powered by Solace</span></h1>
+    <img alt="Shop logo" class="shoplogo" src="/images/acme-shop-logo.png"/>
+</header>
+
+<div class="container mt-5">
+    <form action="#" class="row g-3" method="post" th:action="@{/connectToBroker}"
+          th:object="${solaceConnectionParameters}">
+        <div class="col-md-3 mb-3">
+            <input class="form-control" id="hostUrl" name="hostUrl" placeholder="Host URL" th:field="*{hostUrl}"
+                   type="text">
+            <span th:errors="*{hostUrl}"></span>
+        </div>
+        <div class="col-md-3 mb-3">
+            <input class="form-control" id="vpnName" name="vpnName" placeholder="VPN Name" th:field="*{vpnName}"
+                   type="text">
+            <span th:errors="*{vpnName}"></span>
+        </div>
+        <div class="col-md-3 mb-3">
+            <input class="form-control" id="userName" name="userName" placeholder="Username" th:field="*{userName}"
+                   type="text">
+            <span th:errors="*{userName}"></span>
+        </div>
+        <div class="col-md-3 mb-3">
+            <input class="form-control" id="password" name="password" placeholder="Password" th:field="*{password}"
+                   type="text">
+            <span th:errors="*{password}"></span>
+        </div>
+        <div class="col-md-3 offset-md-3">
+            <button class="btn btn-primary" type="submit">Connect to broker</button>
+        </div>
+    </form>
+</div>
+<div class="container mt-5 alert alert-success mt-4" th:if="${brokerConnected == true }">
+    <strong>Success!</strong> Broker connected successfully
+</div>
+<div class="container mt-5 alert alert-danger mt-4" th:if="${brokerConnected == false}">
+    <strong>Error!</strong> Broker connection failed
+</div>
+
+<div class="container mt-3" th:if="${brokerConnected == true}">
+
+    <div>
+        <h4> New Online basket creation</h4>
+        <form action="#" class="row g-3" method="post" th:action="@{/createNewBasket}">
+            <div class="col-md-3 offset-md-3">
+                <button class="btn btn-primary" type="submit">Create a new basket for ordering</button>
+            </div>
+        </form>
+    </div>
+
+    <div th:if="${brokerConnected == true && orderMap != null}">
+        <div class="divider"></div> <!-- Divider between the two divs -->
+        <h4>Basket/Order Details</h4>
+        <table id="orderTable">
+            <thead>
+            <tr>
+                <th>Order id</th>
+                <th>Customer id</th>
+                <th>Order status</th>
+                <th>Product</th>
+                <th>Quantity</th>
+                <th>Total cost</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="order : ${orderMap}">
+                <td th:text="${order.value.id}">Order id</td>
+                <td th:text="${order.value.customerId}">Customer id</td>
+                <td th:text="${order.value.state}">Order Status</td>
+                <td th:text="${order.value.product}">Product</td>
+                <td th:text="${order.value.quantity}">Quantity</td>
+                <td th:text="${order.value.price}">Order cost</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+<script th:inline="javascript">
+
+    function updateOrdersList() {
+        $.ajax({
+            url: '/updateOrderList',
+            type: 'GET',
+            success: function (orders) {
+                // Clear existing table rows
+                $('#orderTable tbody').empty();
+
+                // Iterate over the received accounts and populate the table
+                $.each(orders, function (index, order) {
+                    $('#orderTable tbody').append(
+                        '<tr>' +
+                        '<td>' + order.id + '</td>' +
+                        '<td>' + order.customerId + '</td>' +
+                        '<td>' + order.state + '</td>' +
+                        '<td>' + order.product + '</td>' +
+                        '<td>' + order.quantity + '</td>' +
+                        '<td>' + order.price + '</td>' +
+                        '</tr>'
+                    );
+                });
+            },
+            error: function (xhr, status, error) {
+                console.error('Failed to retrieve orders: ' + error);
+            }
+        });
+    }
+
+    $(document).ready(function () {
+        setInterval(updateOrdersList, 15000);
+    });
+
+</script>
+</body>
+
+</html>

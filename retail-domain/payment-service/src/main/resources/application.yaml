@@ -1,0 +1,9 @@
+spring:
+  main:
+    web-application-type: none
+
+solace:
+  reconnectionAttempts: "5"
+  connectionRetriesPerHost: "5"
+  paymentTopicString: "acmeretail/onlineservices/payment/{verb}/v1/{regionId}/{paymentId}"
+  orderConfirmedQueueName: "all-orders-confirmed"

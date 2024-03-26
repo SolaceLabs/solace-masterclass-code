@@ -1,0 +1,27 @@
+---
+server:
+  port: 8080
+spring:
+  config.activate.on-profile: default
+  thymeleaf:
+    cache: false
+    enabled: true
+    prefix: classpath:/templates/
+    suffix: .html
+  devtools:
+    restart:
+      enabled: true
+    livereload:
+      enabled: true
+  main:
+    allow-circular-references: true
+
+solace:
+  reconnectionAttempts: "5"
+  connectionRetriesPerHost: "5"
+  solaceAccountAppliedTopic: "acmebank/solace/account/applied/v1/{accountID}"
+  solaceAccountOpenedTopic: "acmebank/solace/account/opened/v1/{accountID}"
+  solaceAccountSuspendedTopic: "acmebank/solace/account/suspended/v1/{accountID}"
+  solaceAccountResumedTopic: "acmebank/solace/account/resumed/v1/{accountID}"
+  solaceFraudConfirmedTopic: "acmebank/solace/fraud/confirmed/v1/{accountID}/{transactionID}/{amount}"
+  solaceFraudDetectedEventQueue: "fraud-detected-events"

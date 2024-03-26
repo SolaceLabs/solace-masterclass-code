@@ -1,0 +1,63 @@
+{
+	"id": "2b47f475-fbb8-40b8-9453-c94d5e8d40b0",
+	"name": "Training Environment Definition",
+	"values": [
+		{
+			"key": "api_key",
+			"value": "",
+			"type": "secret",
+			"enabled": true
+		},
+		{
+			"key": "epStudentNamesEmailsString",
+			"value": "[{\n\t\t\"epStudentFirstName\": \"Solace\",\n\t\t\"epStudentLastName\": \"Masterclass\",\n\t\t\"epStudentEmail\": \"Solace-masterclass@solace.com\"\n\t}\n]",
+			"type": "default",
+			"enabled": true
+		},
+		{
+			"key": "epSampleDomain",
+			"value": "retail",
+			"type": "default",
+			"enabled": true
+		},
+		{
+			"key": "epMemNameBase",
+			"value": "StoreOps",
+			"type": "default",
+			"enabled": true
+		},
+		{
+			"key": "epEnterpriseName",
+			"value": "Acme Retail",
+			"type": "default",
+			"enabled": true
+		},
+		{
+			"key": "epCreateEnvironments",
+			"value": "true",
+			"type": "default",
+			"enabled": true
+		},
+		{
+			"key": "epEnvironmentNamesString",
+			"value": "[\"Development\", \"Integration\", \"Production\"]",
+			"type": "default",
+			"enabled": true
+		},
+		{
+			"key": "solaceCloudBaseUrl",
+			"value": "https://api.solace.cloud/api/v0",
+			"type": "default",
+			"enabled": true
+		},
+		{
+			"key": "baseUrl",
+			"value": "api.solace.cloud",
+			"type": "default",
+			"enabled": true
+		}
+	],
+	"_postman_variable_scope": "environment",
+	"_postman_exported_at": "2024-03-26T10:19:29.117Z",
+	"_postman_exported_using": "Postman/10.24.7"
+}

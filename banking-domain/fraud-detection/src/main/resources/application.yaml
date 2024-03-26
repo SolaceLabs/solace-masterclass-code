@@ -1,0 +1,9 @@
+spring:
+  main:
+    web-application-type: none
+
+solace:
+  reconnectionAttempts: "5"
+  connectionRetriesPerHost: "5"
+  fraudDetectedEventTopicString: "acmebank/solace/fraud/detected/v1/{accountID}/{transactionID}/{amount}"
+  bankingTransactionsQueueName: "all-transactions"

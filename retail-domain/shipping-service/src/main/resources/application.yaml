@@ -1,0 +1,9 @@
+spring:
+  main:
+    web-application-type: none
+
+solace:
+  reconnectionAttempts: "5"
+  connectionRetriesPerHost: "5"
+  shippingTopicString: "acmeretail/shipping/shipment/{verb}/v1/{orderId}/{shipmentId}"
+  paymentConfirmedQueueName: "all-payments-confirmed"
