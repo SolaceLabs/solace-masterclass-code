@@ -47,9 +47,7 @@ public class AccountActionsController {
 
     @PostMapping(path = "applyNewAccount")
     public String applyForNewAccount(final Model model) {
-        log.info("New Account application submitted");
         accountService.processAccountApplicationRequest();
-        log.info("AccountsList.getInstance().getAccountsList():{}", AccountsList.getInstance().getAccountsList());
         model.addAttribute("accountsList", AccountsList.getInstance().getAccountsList());
         return "home";
     }
@@ -57,8 +55,6 @@ public class AccountActionsController {
     @GetMapping(path = "updateAccountsList", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     public Map<String, Account> updateAccountsList() {
-        log.info("Updating the account statuses");
-        log.info("AccountsList.getInstance().getAccountsList():{}", AccountsList.getInstance().getAccountsList());
         return AccountsList.getInstance().getAccountsList();
     }
 

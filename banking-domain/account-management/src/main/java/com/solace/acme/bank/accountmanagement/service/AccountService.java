@@ -32,7 +32,6 @@ public class AccountService {
 
 
     public void processAccountApplicationRequest() {
-        log.info("Processing a new account creation request");
         final String newAccountNumber = generateAccountNumber();
         final Account newAccount = Account.builder().accountNumber(newAccountNumber).currentStatus(Account.Status.APPLIED).comment("New account application under processing").build();
         final AccountAction newAccountAppliedAction = createAccountAppliedEventPayload(newAccountNumber);
@@ -48,7 +47,6 @@ public class AccountService {
     }
 
     public void processAccountResumedRequest(final String accountNumber) {
-        log.info("Processing account resuming");
         final AccountAction accountResumedAction = createAccountResumedEventPayload(accountNumber);
         solaceEventPublisher.publishAccountResumedEvent(accountResumedAction);
         Account account = AccountsList.getInstance().getAccountsList().get(accountNumber);
@@ -66,7 +64,6 @@ public class AccountService {
     }
 
     public void processAccountOpening(final String accountNumber) {
-        log.info("Processing account opening");
         final AccountAction accountOpenedAction = createAccountOpenedEventPayload(accountNumber);
         solaceEventPublisher.publishAccountOpenedEvent(accountOpenedAction);
         Account account = AccountsList.getInstance().getAccountsList().get(accountNumber);

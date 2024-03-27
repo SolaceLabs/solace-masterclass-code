@@ -1,6 +1,6 @@
 ---
 server:
-  port: 8080
+  port: 9092
 spring:
   config.activate.on-profile: default
   thymeleaf:
