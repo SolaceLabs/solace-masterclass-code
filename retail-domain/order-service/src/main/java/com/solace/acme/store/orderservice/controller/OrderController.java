@@ -45,9 +45,7 @@ public class OrderController {
 
     @PostMapping(path = "/createNewBasket")
     public String createNewBasket(final Model model) {
-        log.info("New basket request being processed");
         orderService.createBasket();
-        log.info("OrderCache.getInstance().getOrderMap():{}", OrderCache.getInstance().getOrderMap());
         model.addAttribute("orderMap", OrderCache.getInstance().getOrderMap());
         return "home";
     }
@@ -55,8 +53,6 @@ public class OrderController {
     @GetMapping(path = "updateOrderList", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     public Map<String, Order> updateAccountsList() {
-        log.info("Updating the order statuses");
-        log.info("AccountsList.getInstance().getAccountsList():{}", OrderCache.getInstance().getOrderMap());
         return OrderCache.getInstance().getOrderMap();
     }
 

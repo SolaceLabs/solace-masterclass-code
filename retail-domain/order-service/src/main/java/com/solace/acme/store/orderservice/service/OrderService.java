@@ -34,7 +34,6 @@ public class OrderService {
     }
 
     public void createBasket() {
-        log.info("Processing a new basket creation request");
         final Order order = generateNewOrderModelForBasket();
         OrderCache.getInstance().getOrderMap().put(order.getId(), order);
         scheduleOrderCreatedEvent(order);
@@ -48,7 +47,6 @@ public class OrderService {
 
 
     void processOrderCreation(final Order order) {
-        log.info("Processing Order creation");
         order.setState(Order.OrderState.CREATED);
         solaceEventPublisher.publishOrderCreatedEvent(order);
         OrderCache.getInstance().getOrderMap().put(order.getId(), order);
