@@ -1,17 +1,12 @@
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-v2.0%20adopted-ff69b4.svg)](CODE_OF_CONDUCT.md)
 
-# Wireshark SMF Plugin
+# Solace Masterclass Artefacts
 
 ## Overview
-This project is ...
-
-## Getting started quickly
-1. Step 1
-1. Step 2
-1. Step 3
+This project contains all the code artefacts required for the hands-on section of the Solace Masterclass program. 
 
 ## Documentation
-Details about the what why and how of this project. Either refer to external documentations or document in this repo
+You can find detailed instructions on how to use these artefacts as a part of the Solace materclass codelab over here : LINK_TO_BE_CONFIRMED
 
 ## Resources
 This is not an officially supported Solace product.
@@ -19,7 +14,6 @@ This is not an officially supported Solace product.
 For more information try these resources:
 - Ask the [Solace Community](https://solace.community)
 - The Solace Developer Portal website at: https://solace.dev
-
 
 ## Contributing
 Contributions are encouraged! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests to us.
@@ -32,7 +26,7 @@ See the [LICENSE](license.txt) file for details.
 
 ## License
 
-Wireshark SMF Plugin is licensed under the GNU GPLv2. See the [LICENSE](license.txt) file for details.
+Solace Masterclass is licensed under the GNU GPLv2. See the [LICENSE](license.txt) file for details.
 
 ## Disclaimer
 
