@@ -13,4 +13,16 @@ import org.springframework.stereotype.Service;
 public class AccountsEventProcessor {
 
     ObjectMapper objectMapper = new ObjectMapper();
+    
+    public boolean processAccountOpenedEvent(final String accountOpenedActionEventPayload) {
+        try {
+            AccountAction accountOpenedEvent = objectMapper.readValue(accountOpenedActionEventPayload, AccountAction.class);
+            Account openedAccount = Account.builder().accountNumber(accountOpenedEvent.getAccountNum()).currentStatus(Account.Status.OPENED).build();
+            AccountsList.getInstance().getAccountsList().put(openedAccount.getAccountNumber(), openedAccount);
+            return true;
+        } catch (JsonProcessingException jsonProcessingException) {
+            log.error("Error encountered while processing AccountOpened event:{}, exception:", accountOpenedActionEventPayload, jsonProcessingException);
+            return false;
+        }
+    }
 }
