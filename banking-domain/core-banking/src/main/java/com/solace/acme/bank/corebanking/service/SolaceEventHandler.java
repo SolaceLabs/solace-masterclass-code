@@ -79,6 +79,22 @@ public class SolaceEventHandler {
         }
     }
 
+    private MessageReceiver.MessageHandler buildAccountsSuspendedEventHandler(PersistentMessageReceiver accountOpenedEventReceiver) {
+            return (inboundMessage -> {
+                try {
+                    final String inboundTopic = inboundMessage.getDestinationName();
+                    log.info("Processing message on incoming topic :{} with payload:{}", inboundTopic, inboundMessage.getPayloadAsString());
+                    boolean eventProcessed = accountsEventProcessor.processAccountSuspendedEvent(inboundMessage.getPayloadAsString());
+                    if (eventProcessed) {
+                        accountOpenedEventReceiver.ack(inboundMessage);
+                    }
+                } catch (RuntimeException runtimeException) {
+                    log.error("Runtime exception encountered while processing incoming event payload :{} on topic:{}. Error is :",
+                            inboundMessage.getPayloadAsString(), inboundMessage.getDestinationName(), runtimeException);
+                }
+            });
+          }
+
     private MessageReceiver.MessageHandler buildAccountsOpenedEventHandler(PersistentMessageReceiver accountOpenedEventReceiver) {
         return (inboundMessage -> {
             try {
