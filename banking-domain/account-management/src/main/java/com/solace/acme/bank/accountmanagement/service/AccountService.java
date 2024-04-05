@@ -94,6 +94,13 @@ public class AccountService {
         return String.valueOf(accountNumber);
     }
 
+    private AccountAction createAccountSuspendedEventPayload(final String accountNumber) {
+            return AccountAction.builder()
+                    .accountNum(accountNumber)
+                    .accountAction(Account.Status.SUSPENDED.toString())
+                    .timestamp(generateCurrentTimestamp())
+                    .build();
+          }
 
     private String generateCurrentTimestamp() {
         LocalDateTime currentTimestamp = LocalDateTime.now();
