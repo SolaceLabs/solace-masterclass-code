@@ -39,6 +39,29 @@ public class FraudService {
         this.accountService = accountService;
         this.solaceEventPublisher = solaceEventPublisher;
     }
+
+
+
+
+    private void createAndPublishFraudConfirmedEvent(final FraudDetected fraudDetected) {
+                final FraudConfirmed fraudConfirmed = createFraudConfirmedInstance(fraudDetected);
+                solaceEventPublisher.publishFraudConfirmedEvent(fraudConfirmed);
+              }
+
+    private FraudConfirmed createFraudConfirmedInstance(final FraudDetected fraudDetected) {
+              return Instancio.of(FraudConfirmed.class)
+              .generate(field(FraudConfirmed::getDetectionNum), gen -> gen.ints())
+              .set(field(FraudConfirmed::getTransactionNum), fraudDetected.getTransactionNum())
+              .set(field(FraudConfirmed::getAccountNum), fraudDetected.getAccountNum())
+              .set(field(FraudConfirmed::getTransactionType), fraudDetected.getTransactionType())
+              .set(field(FraudConfirmed::getAmount), fraudDetected.getAmount())
+              .set(field(FraudConfirmed::getCurrency), fraudDetected.getCurrency())
+              .set(field(FraudConfirmed::getIncidentDescription), "Confirmed fraudulent transaction")
+              .generate(field(FraudConfirmed::getFraudConfirmedBy), gen -> gen.oneOf("John Doe", "Jane Doe", "Comptroller"))
+              .set(field(FraudConfirmed::getIncidentTimestamp), fraudDetected.getTimestamp())
+              .set(field(FraudConfirmed::getTimestamp), generateCurrentTimestamp())
+              .create();
+              }
     private String generateCurrentTimestamp() {
         LocalDateTime currentTimestamp = LocalDateTime.now();
         String pattern = "yyyy-MM-dd'T'HH:mm:ss";
