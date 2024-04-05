@@ -85,6 +85,52 @@ public class SolaceEventPublisher {
         }
     }
 
+    private MessageReceiver.MessageHandler buildFraudDetectedEventHandler(PersistentMessageReceiver fraudDetectedEventReceiver) {
+                      return (inboundMessage -> {
+                          try {
+                              final String inboundTopic = inboundMessage.getDestinationName();
+                              log.info("Processing message on incoming topic :{} with payload:{}", inboundTopic, inboundMessage.getPayloadAsString());
+                              boolean eventProcessed = fraudService.processFraudDetectedEvent(inboundMessage.getPayloadAsString());
+                              if (eventProcessed) {
+                                  fraudDetectedEventReceiver.ack(inboundMessage);
+                              }
+                          } catch (RuntimeException runtimeException) {
+                              log.error("Runtime exception encountered while processing incoming event payload :{} on topic:{}. Error is :", inboundMessage.getPayloadAsString(), inboundMessage.getDestinationName(), runtimeException);
+                          }
+                      });
+                  }
+    public void publishFraudConfirmedEvent(final FraudConfirmed fraudConfirmed) {
+                  try {
+                      String fraudConfirmedJson = objectMapper.writeValueAsString(fraudConfirmed);
+                      final OutboundMessage message = messageBuilder.build(fraudConfirmedJson);
+                      final Map<String, Object> params = new HashMap<>();
+                      params.put("accountID", fraudConfirmed.getAccountNum());
+                      params.put("transactionID", fraudConfirmed.getTransactionNum());
+                      params.put("amount", fraudConfirmed.getAmount());
+                      String topicString = StringSubstitutor.replace(configProperties.getSolaceFraudConfirmedTopic(), params, "{", "}");
+                      publisher.publish(message, Topic.of(topicString));
+                      log.info("Published FraudConfirmed event :{} on topic : {}", fraudConfirmedJson, topicString);
+                  } catch (final RuntimeException runtimeException) {
+                      log.error("Error encountered while publishing event, exception :", runtimeException);
+                  } catch (JsonProcessingException jsonProcessingException) {
+                      log.error("Error encountered while converting fraudConfirmed to JSON string, exception :", jsonProcessingException);
+                  }
+                }
+    public void publishAccountSuspendedEvent(final AccountAction accountSuspendedAction) {
+                try {
+                    String accountSuspendedActionJson = objectMapper.writeValueAsString(accountSuspendedAction);
+                    final OutboundMessage message = messageBuilder.build(accountSuspendedActionJson);
+                    final Map<String, Object> params = new HashMap<>();
+                    params.put("accountID", accountSuspendedAction.getAccountNum());
+                    String topicString = StringSubstitutor.replace(configProperties.getSolaceAccountSuspendedTopic(), params, "{", "}");
+                    publisher.publish(message, Topic.of(topicString));
+                    log.info("Published AccountSuspended event :{} on topic : {}", accountSuspendedActionJson, topicString);
+                } catch (final RuntimeException runtimeException) {
+                    log.error("Error encountered while publishing event, exception :", runtimeException);
+                } catch (JsonProcessingException jsonProcessingException) {
+                    log.error("Error encountered while converting accountSuspendedActionEvent to JSON string, exception :", jsonProcessingException);
+                }
+            }
 
     private static void setupConnectivityHandlingInMessagingService(final MessagingService messagingService) {
         messagingService.addServiceInterruptionListener(
