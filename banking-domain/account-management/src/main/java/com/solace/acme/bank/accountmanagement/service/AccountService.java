@@ -30,16 +30,6 @@ public class AccountService {
         return solaceEventPublisher.connectToBroker(solaceConnectionParameters);
     }
 
-    public void processAccountSuspensionRequest(final String accountNumber) {
-        log.info("Processing account suspension");
-        final AccountAction accountSuspendedAction = createAccountSuspendedEventPayload(accountNumber);
-        solaceEventPublisher.publishAccountSuspendedEvent(accountSuspendedAction);
-        Account account = AccountsList.getInstance().getAccountsList().get(accountNumber);
-        account.setCurrentStatus(Account.Status.SUSPENDED);
-        account.setComment("Account suspended due to potential suspicious/fraudulent transaction(s)");
-        AccountsList.getInstance().getAccountsList().put(accountNumber, account);
-      }
-
     public void processAccountApplicationRequest() {
         final String newAccountNumber = generateAccountNumber();
         final Account newAccount = Account.builder().accountNumber(newAccountNumber).currentStatus(Account.Status.APPLIED).comment("New account application under processing").build();

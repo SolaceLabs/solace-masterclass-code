@@ -71,58 +71,10 @@ public class SolaceEventPublisher {
                 }
             });
 
-            final PersistentMessageReceiver orderUpdatesEventReceiver = messagingService.createPersistentMessageReceiverBuilder().build(Queue.durableExclusiveQueue(configProperties.getOrderUpdatesQueueName()));
-            orderUpdatesEventReceiver.setReceiveFailureListener(failedReceiveEvent -> System.out.println("### FAILED RECEIVE EVENT " + failedReceiveEvent));
-            orderUpdatesEventReceiver.start();
-            orderUpdatesEventReceiver.receiveAsync(buildOrdersUpdatesEventHandler(orderUpdatesEventReceiver));
-
 
             return true;
         } catch (Exception exception) {
             log.error("Error encountered while connecting to the Solace broker, error :{}", exception.getMessage());
-            return false;
-        }
-    }
-
-    private MessageReceiver.MessageHandler buildOrdersUpdatesEventHandler(final PersistentMessageReceiver orderUpdatesEventReceiver) {
-        return (inboundMessage -> {
-          try {
-              final String inboundTopic = inboundMessage.getDestinationName();
-              log.info("Processing message on incoming topic :{} with payload:{}", inboundTopic, inboundMessage.getPayloadAsString());
-              boolean eventProcessed = processOrderUpdate(inboundTopic, inboundMessage.getPayloadAsString());
-              if (eventProcessed) {
-                orderUpdatesEventReceiver.ack(inboundMessage);
-              }
-          } catch (RuntimeException runtimeException) {
-            log.error("Runtime exception encountered while processing incoming event payload :{} on topic:{}. Error is :", inboundMessage.getPayloadAsString(), inboundMessage.getDestinationName(), runtimeException);
-          }
-        });
-      }
-
-      private boolean processOrderUpdate(final String eventTopic, final String eventJson) {
-        try {
-            if (eventTopic.contains("order")) {
-                final Order order = objectMapper.readValue(eventJson, Order.class);
-                final String incomingOrderId = order.getId();
-                Order orderObjectFromCache = OrderCache.getInstance().getOrderMap().get(incomingOrderId);
-                orderObjectFromCache.setState(Order.OrderState.VALIDATED);
-                OrderCache.getInstance().getOrderMap().put(incomingOrderId, orderObjectFromCache);
-            } else if (eventTopic.contains("payment")) {
-                final Payment payment = objectMapper.readValue(eventJson, Payment.class);
-                final String incomingOrderId = payment.getOrderId();
-                Order orderObjectFromCache = OrderCache.getInstance().getOrderMap().get(incomingOrderId);
-                orderObjectFromCache.setState(Order.OrderState.PAYMENT_PROCESSED);
-                OrderCache.getInstance().getOrderMap().put(incomingOrderId, orderObjectFromCache);
-            } else if (eventTopic.contains("shipment")) {
-                final Shipping shipment = objectMapper.readValue(eventJson, Shipping.class);
-                final String incomingOrderId = shipment.getOrderId();
-                Order orderObjectFromCache = OrderCache.getInstance().getOrderMap().get(incomingOrderId);
-                orderObjectFromCache.setState(Order.OrderState.SHIPPED);
-                OrderCache.getInstance().getOrderMap().put(incomingOrderId, orderObjectFromCache);
-            }
-            return true;
-        } catch (JsonProcessingException jsonProcessingException) {
-            log.error("Error encountered while processing event:{}, exception:", eventJson, jsonProcessingException);
             return false;
         }
     }

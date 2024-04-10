@@ -41,23 +41,6 @@ public class FraudService {
     }
 
 
-    public boolean processFraudDetectedEvent(final String incomingFraudDetectedEventJson) {
-        try {
-            final FraudDetected fraudDetectedEvent = objectMapper.readValue(incomingFraudDetectedEventJson, FraudDetected.class);
-
-            boolean isFraud = random.nextBoolean();
-            if (isFraud) {
-                log.info("Flagging potential fraud as confirmed :{}", fraudDetectedEvent);
-                createAndPublishFraudConfirmedEvent(fraudDetectedEvent);
-                accountService.processAccountSuspensionRequest(fraudDetectedEvent.getAccountNum());
-            }
-            return true;
-        } catch (JsonProcessingException jsonProcessingException) {
-            log.error("Error encountered while processing FraudDetected event:{}, exception:", incomingFraudDetectedEventJson, jsonProcessingException);
-            return false;
-        }
-      }
-
     private void createAndPublishFraudConfirmedEvent(final FraudDetected fraudDetected) {
                 final FraudConfirmed fraudConfirmed = createFraudConfirmedInstance(fraudDetected);
                 solaceEventPublisher.publishFraudConfirmedEvent(fraudConfirmed);

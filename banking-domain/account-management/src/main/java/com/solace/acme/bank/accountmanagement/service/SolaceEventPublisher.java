@@ -76,11 +76,6 @@ public class SolaceEventPublisher {
             });
 
 
-            final PersistentMessageReceiver fraudDetectedEventReceiver = messagingService.createPersistentMessageReceiverBuilder().build(Queue.durableExclusiveQueue(configProperties.getSolaceFraudDetectedEventQueue()));
-            fraudDetectedEventReceiver.setReceiveFailureListener(failedReceiveEvent -> log.error("### FAILED RECEIVE EVENT " + failedReceiveEvent));
-            fraudDetectedEventReceiver.start();
-            fraudDetectedEventReceiver.receiveAsync(buildFraudDetectedEventHandler(fraudDetectedEventReceiver));
-
             return true;
         } catch (Exception exception) {
             log.error("Error encountered while connecting to the Solace broker, error :{}", exception.getMessage());
@@ -88,22 +83,6 @@ public class SolaceEventPublisher {
         }
     }
 
-    private MessageReceiver.MessageHandler buildFraudDetectedEventHandler(PersistentMessageReceiver fraudDetectedEventReceiver) {
-        return (inboundMessage -> {
-            try {
-                final String inboundTopic = inboundMessage.getDestinationName();
-                log.info("Processing message on incoming topic :{} with payload:{}", inboundTopic, inboundMessage.getPayloadAsString());
-                boolean eventProcessed = fraudService.processFraudDetectedEvent(inboundMessage.getPayloadAsString());
-                if (eventProcessed) {
-                    fraudDetectedEventReceiver.ack(inboundMessage);
-                }
-            } catch (RuntimeException runtimeException) {
-                log.error("Runtime exception encountered while processing incoming event payload :{} on topic:{}. Error is :", inboundMessage.getPayloadAsString(), inboundMessage.getDestinationName(), runtimeException);
-            }
-        });
-    }
-
-    
     public void publishFraudConfirmedEvent(final FraudConfirmed fraudConfirmed) {
                   try {
                       String fraudConfirmedJson = objectMapper.writeValueAsString(fraudConfirmed);
