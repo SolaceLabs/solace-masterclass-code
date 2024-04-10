@@ -6,7 +6,7 @@
 This project contains all the code artefacts required for the hands-on section of the Solace Masterclass program. 
 
 ## Documentation
-You can find detailed instructions on how to use these artefacts as a part of the Solace materclass codelab over here : LINK_TO_BE_CONFIRMED
+You can find detailed instructions on how to use these artefacts as a part of the Solace materclass codelab over here : [Solace Masterclass Codelab](https://codelabs.solace.dev/codelabs/solace-masterclass/#0)
 
 ## Resources
 This is not an officially supported Solace product.
