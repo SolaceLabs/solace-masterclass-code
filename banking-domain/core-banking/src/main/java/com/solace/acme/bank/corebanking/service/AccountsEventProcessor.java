@@ -25,4 +25,17 @@ public class AccountsEventProcessor {
             return false;
         }
     }
+
+    public boolean processAccountSuspendedEvent(final String accountSuspendedActionEventPayload) {
+        try {
+            AccountAction accountSuspendedEvent = objectMapper.readValue(accountSuspendedActionEventPayload, AccountAction.class);
+            Account suspendedAccount = Account.builder().accountNumber(accountSuspendedEvent.getAccountNum()).currentStatus(Account.Status.SUSPENDED).build();
+            AccountsList.getInstance().getAccountsList().put(suspendedAccount.getAccountNumber(), suspendedAccount);
+            log.info("After processing the updated map is :{}", AccountsList.getInstance().getAccountsList());
+            return true;
+        } catch (JsonProcessingException jsonProcessingException) {
+            log.error("Error encountered while processing AccountOpened event:{}, exception:", accountSuspendedActionEventPayload, jsonProcessingException);
+            return false;
+        }
+   }
 }

@@ -55,6 +55,12 @@ public class SolaceEventHandler {
 
             // code in here for receiving Account Suspended events
 
+            final PersistentMessageReceiver accountSuspendedEventReceiver = messagingService.createPersistentMessageReceiverBuilder().build(Queue.durableExclusiveQueue(configProperties.getAccountsSuspendedQueueName()));
+            accountSuspendedEventReceiver.setReceiveFailureListener(failedReceiveEvent -> System.out.println("### FAILED RECEIVE EVENT " + failedReceiveEvent));
+            accountSuspendedEventReceiver.start();
+            accountSuspendedEventReceiver.receiveAsync(buildAccountsSuspendedEventHandler(accountSuspendedEventReceiver)); 
+
+
             persistentMessagePublisher.start();
             persistentMessagePublisher.setMessagePublishReceiptListener(publishReceipt -> {
                 final PubSubPlusClientException e = publishReceipt.getException();
@@ -78,6 +84,22 @@ public class SolaceEventHandler {
             return false;
         }
     }
+
+    private MessageReceiver.MessageHandler buildAccountsSuspendedEventHandler(PersistentMessageReceiver accountOpenedEventReceiver) {
+        return (inboundMessage -> {
+            try {
+                final String inboundTopic = inboundMessage.getDestinationName();
+                log.info("Processing message on incoming topic :{} with payload:{}", inboundTopic, inboundMessage.getPayloadAsString());
+                boolean eventProcessed = accountsEventProcessor.processAccountSuspendedEvent(inboundMessage.getPayloadAsString());
+                if (eventProcessed) {
+                    accountOpenedEventReceiver.ack(inboundMessage);
+                }
+            } catch (RuntimeException runtimeException) {
+                log.error("Runtime exception encountered while processing incoming event payload :{} on topic:{}. Error is :",
+                        inboundMessage.getPayloadAsString(), inboundMessage.getDestinationName(), runtimeException);
+            }
+        });
+      }
 
     private MessageReceiver.MessageHandler buildAccountsOpenedEventHandler(PersistentMessageReceiver accountOpenedEventReceiver) {
         return (inboundMessage -> {
