@@ -44,16 +44,9 @@ public class OrderController {
     }
 
     @PostMapping(path = "/createNewBasket")
-    public String createNewBasket(final Model model) {
-        orderService.createBasket();
-        model.addAttribute("orderMap", OrderCache.getInstance().getOrderMap());
-        return "home";
-    }
-
-    @GetMapping(path = "updateOrderList", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
-    public Map<String, Order> updateAccountsList() {
-        return OrderCache.getInstance().getOrderMap();
+    public Order createNewBasket(final Model model) {
+        final Order newOrder = orderService.createBasket();
+        return newOrder;
     }
-
 }

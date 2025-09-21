@@ -71,7 +71,6 @@ public class SolaceEventPublisher {
                 }
             });
 
-
             return true;
         } catch (Exception exception) {
             log.error("Error encountered while connecting to the Solace broker, error :{}", exception.getMessage());
