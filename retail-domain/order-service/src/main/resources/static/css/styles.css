@@ -92,3 +92,5 @@ tr:nth-child(even) {
     background-color: #ccc;
     margin: 20px 0;
 }
+
+.d-none { display: none !important; }

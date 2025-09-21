@@ -33,10 +33,11 @@ public class OrderService {
         return solaceEventPublisher.connectToBroker(solaceConnectionParameters);
     }
 
-    public void createBasket() {
+    public Order createBasket() {
         final Order order = generateNewOrderModelForBasket();
         OrderCache.getInstance().getOrderMap().put(order.getId(), order);
         scheduleOrderCreatedEvent(order);
+        return order;
     }
 
     private void scheduleOrderCreatedEvent(final Order order) {
